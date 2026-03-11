@@ -2,6 +2,16 @@ import React, { useState } from "react";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
+// Error box styling
+const ERROR_BOX_STYLE = {
+  padding: 12,
+  borderRadius: 10,
+  background: "rgba(239,68,68,0.10)",
+  border: "1px solid rgba(239,68,68,0.25)",
+  color: "rgba(127,29,29,1)",
+  fontSize: 14,
+};
+
 async function fetchJson(path) {
   const url = `${API_URL}${path}`;
   const res = await fetch(url);
@@ -97,16 +107,7 @@ export default function HelloHealthCard() {
         </div>
 
         {error && (
-          <div
-            style={{
-              padding: 12,
-              borderRadius: 10,
-              background: "rgba(239,68,68,0.10)",
-              border: "1px solid rgba(239,68,68,0.25)",
-              color: "rgba(127,29,29,1)",
-              fontSize: 14,
-            }}
-          >
+          <div style={ERROR_BOX_STYLE}>
             <b>Couldn’t reach the backend.</b>
             <div style={{ marginTop: 6 }}>
               {error}
