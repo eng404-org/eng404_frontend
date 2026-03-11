@@ -52,7 +52,9 @@ export default function App() {
   const [lastTouched, setLastTouched] = useState({ hello: null, states: null, cities: null });
 
   // Endpoint 1: /hello
+  // eslint-disable-next-line no-unused-vars
   const [hello, setHello] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [helloErr, setHelloErr] = useState(null);
 
   // Endpoint 2: /state/read
@@ -68,6 +70,7 @@ export default function App() {
   const [sortDir, setSortDir] = useState("asc");
   const [visibleCount, setVisibleCount] = useState(10);
 
+  // eslint-disable-next-line no-unused-vars
   const [loadingHello, setLoadingHello] = useState(false);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
