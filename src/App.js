@@ -9,11 +9,14 @@ const DEFAULT_API_URL =
   process.env.REACT_APP_API_BASE_URL ||
   "http://localhost:8000";
 
+const DEFAULT_STATE_CODE = "NY";
+const DEFAULT_LIMIT = "10";
+
 // Error messages
 const ERROR_MESSAGES = {
   FETCH_ERROR: "Error when fetching data.",
-  DEFAULT_STATE: "NY",
-  DEFAULT_LIMIT: "10",
+  DEFAULT_STATE: DEFAULT_STATE_CODE,
+  DEFAULT_LIMIT: DEFAULT_LIMIT,
 };
 
 const normalizeBase = (value) => {
@@ -81,8 +84,8 @@ export default function App() {
   const [statesErr, setStatesErr] = useState(null);
 
   // Endpoint 3: /cities (with query params)
-  const [stateCode, setStateCode] = useState("NY");
-  const [limit, setLimit] = useState("10");
+  const [stateCode, setStateCode] = useState(DEFAULT_STATE_CODE);
+  const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [cities, setCities] = useState(null);
   const [citiesErr, setCitiesErr] = useState(null);
   const [cityQuery, setCityQuery] = useState("");
@@ -256,6 +259,9 @@ export default function App() {
                 className="input"
                 value={apiBaseDraft}
                 onChange={(e) => setApiBaseDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") testAndApplyBase();
+                }}
                 placeholder="http://localhost:8000"
               />
               <button className="btn" onClick={testAndApplyBase} disabled={testingBase}>
@@ -401,6 +407,8 @@ export default function App() {
               onClick={() => {
                 setCities(null);
                 setCitiesErr(null);
+                setStateCode(DEFAULT_STATE_CODE);
+                setLimit(DEFAULT_LIMIT);
                 setCityQuery("");
                 setSortDir("asc");
                 setVisibleCount(10);
