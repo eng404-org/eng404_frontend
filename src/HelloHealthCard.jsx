@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const DEFAULT_API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 // Error box styling
 const ERROR_BOX_STYLE = {
@@ -12,8 +12,17 @@ const ERROR_BOX_STYLE = {
   fontSize: 14,
 };
 
-async function fetchJson(path) {
-  const url = `${API_URL}${path}`;
+const normalizeBase = (value) => {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return DEFAULT_API_URL.replace(/\/+$/, "");
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  return withProtocol.replace(/\/+$/, "");
+};
+
+async function fetchJson(base, path) {
+  const cleanBase = normalizeBase(base);
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${cleanBase}${cleanPath}`;
   const res = await fetch(url);
   const text = await res.text();
   let data;
@@ -43,7 +52,8 @@ function HealthBadge({ ok }) {
   );
 }
 
-export default function HelloHealthCard() {
+export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
+  const cleanBase = useMemo(() => normalizeBase(apiBase), [apiBase]);
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState(null); // null = not checked yet
   const [latencyMs, setLatencyMs] = useState(null);
@@ -59,7 +69,7 @@ export default function HelloHealthCard() {
 
     const t0 = performance.now();
     try {
-      const resp = await fetchJson("/hello");
+      const resp = await fetchJson(cleanBase, "/hello");
       const t1 = performance.now();
       setLatencyMs(Math.round(t1 - t0));
       setCheckedAt(new Date());
@@ -90,7 +100,7 @@ export default function HelloHealthCard() {
           </button>
 
           <span style={{ opacity: 0.75, fontSize: 13 }}>
-            API: <code>{API_URL}</code>
+            API: <code>{cleanBase}</code>
           </span>
 
           {latencyMs !== null && (

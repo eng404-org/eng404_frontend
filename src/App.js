@@ -2,9 +2,9 @@ import React, { useMemo, useState, useEffect, useCallback } from "react";
 import "./App.css";
 import "leaflet/dist/leaflet.css";
 import GeoMap from "./GeoMap";
-import HelloHealthCard from "./HelloHealthCard"; 
+import HelloHealthCard from "./HelloHealthCard";
 
-const API_URL =
+const DEFAULT_API_URL =
   process.env.REACT_APP_API_URL ||
   process.env.REACT_APP_API_BASE_URL ||
   "http://localhost:8000";
@@ -16,8 +16,17 @@ const ERROR_MESSAGES = {
   DEFAULT_LIMIT: "10",
 };
 
-async function fetchJson(path) {
-  const url = `${API_URL}${path}`;
+const normalizeBase = (value) => {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return DEFAULT_API_URL.replace(/\/+$/, "");
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  return withProtocol.replace(/\/+$/, "");
+};
+
+async function fetchJson(base, path) {
+  const cleanBase = normalizeBase(base);
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${cleanBase}${cleanPath}`;
   const res = await fetch(url);
   const text = await res.text();
   let data;
@@ -57,6 +66,9 @@ function JsonBox({ value }) {
 
 export default function App() {
   const [lastTouched, setLastTouched] = useState({ hello: null, states: null, cities: null });
+  const [apiBase, setApiBase] = useState(() => normalizeBase(DEFAULT_API_URL));
+  const [apiBaseDraft, setApiBaseDraft] = useState(() => normalizeBase(DEFAULT_API_URL));
+  const [connectionStatus, setConnectionStatus] = useState({ ok: null, base: null, latency: null, message: "" });
 
   // Endpoint 1: /hello
   // eslint-disable-next-line no-unused-vars
@@ -76,6 +88,7 @@ export default function App() {
   const [cityQuery, setCityQuery] = useState("");
   const [sortDir, setSortDir] = useState("asc");
   const [visibleCount, setVisibleCount] = useState(10);
+  const [testingBase, setTestingBase] = useState(false);
 
   // eslint-disable-next-line no-unused-vars
   const [loadingHello, setLoadingHello] = useState(false);
@@ -104,12 +117,32 @@ export default function App() {
     }).format(date);
   }, []);
 
+  const testAndApplyBase = useCallback(async () => {
+    const cleaned = normalizeBase(apiBaseDraft);
+    const started = performance.now();
+    setTestingBase(true);
+    setConnectionStatus({ ok: null, base: cleaned, latency: null, message: "Pinging /hello..." });
+    try {
+      const resp = await fetchJson(cleaned, "/hello");
+      const latency = Math.round(performance.now() - started);
+      setApiBase(cleaned);
+      setHello(resp);
+      setLastTouched((prev) => ({ ...prev, hello: new Date() }));
+      setConnectionStatus({ ok: true, base: cleaned, latency, message: "Connected" });
+    } catch (e) {
+      const latency = Math.round(performance.now() - started);
+      setConnectionStatus({ ok: false, base: cleaned, latency, message: e.message });
+    } finally {
+      setTestingBase(false);
+    }
+  }, [apiBaseDraft]);
+
   const loadHello = useCallback(async () => {
     setGlobalError(null);
     setLoadingHello(true);
     setHelloErr(null);
     try {
-      setHello(await fetchJson("/hello"));
+      setHello(await fetchJson(apiBase, "/hello"));
       setLastTouched((prev) => ({ ...prev, hello: new Date() }));
     } catch (e) {
       setHelloErr(e.message);
@@ -117,14 +150,14 @@ export default function App() {
     } finally {
     setLoadingHello(false);
     }
-  }, []);
+  }, [apiBase]);
 
   const loadStates = useCallback(async () => {
     setGlobalError(null);
     setLoadingStates(true);
     setStatesErr(null);
     try {
-      setStatesResp(await fetchJson("/state/read"));
+      setStatesResp(await fetchJson(apiBase, "/state/read"));
       setLastTouched((prev) => ({ ...prev, states: new Date() }));
     } catch (e) {
       setStatesErr(e.message);
@@ -132,14 +165,14 @@ export default function App() {
     } finally {
     setLoadingStates(false);
     }
-  }, []);
+  }, [apiBase]);
 
   const loadCities = useCallback(async () => {
     setGlobalError(null);
     setLoadingCities(true);
     setCitiesErr(null);
     try {
-      setCities(await fetchJson(citiesPath));
+      setCities(await fetchJson(apiBase, citiesPath));
       setVisibleCount(10);
       setLastTouched((prev) => ({ ...prev, cities: new Date() }));
     } catch (e) {
@@ -148,7 +181,7 @@ export default function App() {
     } finally {
     setLoadingCities(false);
     }
-  }, [citiesPath]);
+  }, [apiBase, citiesPath]);
 
   useEffect(() => {
     loadHello();
@@ -204,7 +237,7 @@ export default function App() {
             interaction explains what it fetches and when it last ran.
           </p>
           <div className="hero-actions">
-            <span className="pill">Base URL: {API_URL}</span>
+            <span className="pill">Active base: {apiBase}</span>
             <span className="pill pill-quiet">3 endpoints wired</span>
             <span className="pill pill-quiet">Leaflet map preview</span>
           </div>
@@ -216,6 +249,45 @@ export default function App() {
             <li><b>Health</b> measures latency and shows raw JSON when needed.</li>
             <li><b>States & cities</b> cards reveal payloads with concise previews.</li>
           </ul>
+          <div className="api-base-panel">
+            <label className="label">API base / port</label>
+            <div className="api-base-controls">
+              <input
+                className="input"
+                value={apiBaseDraft}
+                onChange={(e) => setApiBaseDraft(e.target.value)}
+                placeholder="http://localhost:8000"
+              />
+              <button className="btn" onClick={testAndApplyBase} disabled={testingBase}>
+                {testingBase ? "Pinging..." : "Apply & ping"}
+              </button>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={() => {
+                  const fallback = normalizeBase(DEFAULT_API_URL);
+                  setApiBaseDraft(fallback);
+                  setApiBase(fallback);
+                }}
+              >
+                Use default
+              </button>
+            </div>
+            <div className="connection-row">
+              <span
+                className={`status-dot ${
+                  connectionStatus.ok === true ? "ok" : connectionStatus.ok === false ? "bad" : "idle"
+                }`}
+              />
+              <span className="connection-copy">
+                {connectionStatus.ok === null
+                  ? "Not tested yet"
+                  : connectionStatus.ok
+                  ? `Online in ${connectionStatus.latency} ms`
+                  : connectionStatus.message || "Offline"}
+              </span>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -235,8 +307,8 @@ export default function App() {
       </div>
 
       <div className="layout-grid">
-        <GeoMap apiBase={API_URL} />
-        <HelloHealthCard apiBase={API_URL} />
+        <GeoMap apiBase={apiBase} />
+        <HelloHealthCard apiBase={apiBase} />
       </div>
 
       <Card

@@ -8,8 +8,15 @@ const DEFAULT_CITY_LIMIT = 200;
 const MAP_CENTER = [39.5, -98.35];
 const MAP_ZOOM = 4;
 
-async function fetchJson(path) {
-  const res = await fetch(path);
+const buildUrl = (base, path) => {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const trimmedBase = (base || "").trim();
+  if (!trimmedBase) return cleanPath;
+  return `${trimmedBase.replace(/\/+$/, "")}${cleanPath}`;
+};
+
+async function fetchJson(base, path) {
+  const res = await fetch(buildUrl(base, path));
   const text = await res.text();
   let data;
   try {
@@ -21,7 +28,7 @@ async function fetchJson(path) {
   return data;
 }
 
-export default function GeoMap() {
+export default function GeoMap({ apiBase = "" }) {
   const [points, setPoints] = useState([]);
   const [error, setError] = useState("");
 
@@ -32,7 +39,7 @@ export default function GeoMap() {
       setError("");
 
       try {
-        const data = await fetchJson(`/cities?state_code=${DEFAULT_STATE_CODE}&limit=${DEFAULT_CITY_LIMIT}`);
+        const data = await fetchJson(apiBase, `/cities?state_code=${DEFAULT_STATE_CODE}&limit=${DEFAULT_CITY_LIMIT}`);
 
         const cleaned = Array.isArray(data)
           ? data
