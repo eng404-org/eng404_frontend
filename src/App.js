@@ -9,6 +9,13 @@ const API_URL =
   process.env.REACT_APP_API_BASE_URL ||
   "http://localhost:8000";
 
+// Error messages
+const ERROR_MESSAGES = {
+  FETCH_ERROR: "Error when fetching data.",
+  DEFAULT_STATE: "NY",
+  DEFAULT_LIMIT: "10",
+};
+
 async function fetchJson(path) {
   const url = `${API_URL}${path}`;
   const res = await fetch(url);
@@ -106,7 +113,7 @@ export default function App() {
       setLastTouched((prev) => ({ ...prev, hello: new Date() }));
     } catch (e) {
       setHelloErr(e.message);
-      setGlobalError("Error when fetching data.");
+      setGlobalError(ERROR_MESSAGES.FETCH_ERROR);
     } finally {
     setLoadingHello(false);
     }
@@ -121,7 +128,7 @@ export default function App() {
       setLastTouched((prev) => ({ ...prev, states: new Date() }));
     } catch (e) {
       setStatesErr(e.message);
-      setGlobalError("Error while fetching data.");
+      setGlobalError(ERROR_MESSAGES.FETCH_ERROR);
     } finally {
     setLoadingStates(false);
     }
@@ -137,7 +144,7 @@ export default function App() {
       setLastTouched((prev) => ({ ...prev, cities: new Date() }));
     } catch (e) {
       setCitiesErr(e.message);
-      setGlobalError("Error while fetching data.");
+      setGlobalError(ERROR_MESSAGES.FETCH_ERROR);
     } finally {
     setLoadingCities(false);
     }
