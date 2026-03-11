@@ -2,6 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Popup, CircleMarker } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
+// Configuration constants
+const DEFAULT_STATE_CODE = "NY";
+const DEFAULT_CITY_LIMIT = 200;
+const MAP_CENTER = [39.5, -98.35];
+const MAP_ZOOM = 4;
+
 async function fetchJson(path) {
   const res = await fetch(path);
   const text = await res.text();
@@ -26,7 +32,7 @@ export default function GeoMap() {
       setError("");
 
       try {
-        const data = await fetchJson(`/cities?state_code=NY&limit=200`);
+        const data = await fetchJson(`/cities?state_code=${DEFAULT_STATE_CODE}&limit=${DEFAULT_CITY_LIMIT}`);
 
         const cleaned = Array.isArray(data)
           ? data
@@ -66,7 +72,7 @@ export default function GeoMap() {
       {error ? <div className="error">Map data error: {error}</div> : null}
 
       <div style={{ height: 420, borderRadius: 12, overflow: "hidden" }}>
-        <MapContainer center={[39.5, -98.35]} zoom={4} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
