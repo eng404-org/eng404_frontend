@@ -9,6 +9,8 @@ const DEFAULT_API_URL =
   process.env.REACT_APP_API_BASE_URL ||
   "http://localhost:8000";
 
+const STORAGE_KEY = "eng404_api_base";
+
 const DEFAULT_STATE_CODE = "NY";
 const DEFAULT_LIMIT = "10";
 
@@ -69,8 +71,22 @@ function JsonBox({ value }) {
 
 export default function App() {
   const [lastTouched, setLastTouched] = useState({ hello: null, states: null, cities: null });
-  const [apiBase, setApiBase] = useState(() => normalizeBase(DEFAULT_API_URL));
-  const [apiBaseDraft, setApiBaseDraft] = useState(() => normalizeBase(DEFAULT_API_URL));
+
+  const readStoredBase = useCallback(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const initialBase = useMemo(
+    () => normalizeBase(readStoredBase() || DEFAULT_API_URL),
+    [readStoredBase]
+  );
+
+  const [apiBase, setApiBase] = useState(initialBase);
+  const [apiBaseDraft, setApiBaseDraft] = useState(initialBase);
   const [connectionStatus, setConnectionStatus] = useState({ ok: null, base: null, latency: null, message: "" });
 
   // Endpoint 1: /hello
@@ -139,6 +155,14 @@ export default function App() {
       setTestingBase(false);
     }
   }, [apiBaseDraft]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, apiBase);
+    } catch {
+      // ignore persistence errors (e.g., private mode)
+    }
+  }, [apiBase]);
 
   const loadHello = useCallback(async () => {
     setGlobalError(null);
@@ -243,6 +267,7 @@ export default function App() {
             <span className="pill">Active base: {apiBase}</span>
             <span className="pill pill-quiet">3 endpoints wired</span>
             <span className="pill pill-quiet">Leaflet map preview</span>
+            <span className="pill pill-quiet">Base saved locally</span>
           </div>
         </div>
         <div className="hero-card">
@@ -293,6 +318,7 @@ export default function App() {
                   : connectionStatus.message || "Offline"}
               </span>
             </div>
+            <p className="muted">Base URL is remembered locally; refreshes keep your choice.</p>
           </div>
         </div>
       </header>
