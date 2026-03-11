@@ -63,7 +63,7 @@ export default function GeoMap({ apiBase = "" }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [apiBase]);
 
   const radiusFor = useMemo(() => {
     return (v) => {
