@@ -109,6 +109,11 @@ export default function App() {
   const [visibleCount, setVisibleCount] = useState(10);
   const [testingBase, setTestingBase] = useState(false);
 
+  const [selectedMapState, setSelectedMapState] = useState(null);
+  const [mapCities, setMapCities] = useState([]);
+  const [loadingMapCities, setLoadingMapCities] = useState(false);
+  const [mapCitiesErr, setMapCitiesErr] = useState(null);
+
   // eslint-disable-next-line no-unused-vars
   const [loadingHello, setLoadingHello] = useState(false);
   const [loadingStates, setLoadingStates] = useState(false);
@@ -210,6 +215,32 @@ export default function App() {
     }
   }, [apiBase, citiesPath]);
 
+  
+  const loadCitiesForMapState = useCallback(async (stateCodeFromMap) => {
+    if (!stateCodeFromMap) return;
+  
+    setGlobalError(null);
+    setLoadingMapCities(true);
+    setMapCitiesErr(null);
+    setSelectedMapState(stateCodeFromMap);
+    setStateCode(stateCodeFromMap);
+  
+    try {
+      const path = `/cities?state_code=${encodeURIComponent(stateCodeFromMap)}&limit=20`;
+      const data = await fetchJson(apiBase, path);
+      const results = Array.isArray(data) ? data : data?.cities || data?.results || [];
+      setMapCities(results);
+  
+      setLastTouched((prev) => ({ ...prev, cities: new Date() }));
+    } catch (e) {
+      setMapCities([]);
+      setMapCitiesErr(e.message);
+      setGlobalError("Error while fetching map-selected cities.");
+    } finally {
+      setLoadingMapCities(false);
+    }
+  }, [apiBase]);
+
   useEffect(() => {
     loadHello();
   }, [loadHello]);
@@ -220,7 +251,7 @@ export default function App() {
 
   const citiesArray = Array.isArray(cities)
   ? cities
-  : cities?.cities;
+  : cities?.cities || cities?.results;
 
   const filteredCities = useMemo(() => {
     if (!Array.isArray(citiesArray)) return [];
@@ -273,7 +304,7 @@ export default function App() {
         <div className="hero-card">
           <p className="muted">How to read this page</p>
           <ul className="hero-list">
-            <li><b>Map</b> auto-loads top NY cities and clusters markers.</li>
+            <li><b>Map</b> lets you click a state marker to load and cluster cities.</li>
             <li><b>Health</b> measures latency and shows raw JSON when needed.</li>
             <li><b>States & cities</b> cards reveal payloads with concise previews.</li>
           </ul>
@@ -339,9 +370,39 @@ export default function App() {
       </div>
 
       <div className="layout-grid">
-        <GeoMap apiBase={apiBase} />
-        <HelloHealthCard apiBase={apiBase} />
+        <div>
+          <GeoMap
+            selectedState={selectedMapState}
+            cities={mapCities}
+            onStateSelect={loadCitiesForMapState}
+          />
+
+          <div className="selected-state-panel">
+            <div className="selected-state-title">
+              {selectedMapState ? `Selected state: ${selectedMapState}` : "Selected state: none"}
+            </div>
+
+            {!selectedMapState && (
+              <p className="map-helper-text">
+                Click a blue state marker to load cities on the map.
+              </p>
+            )}
+
+          {loadingMapCities && <p className="path">Loading cities from map selection...</p>}
+
+          {mapCitiesErr && <p className="path error-text">{mapCitiesErr}</p>}
+
+          {!loadingMapCities && !mapCitiesErr && selectedMapState && (
+            <p className="path">
+              Loaded <b>{mapCities.length}</b> cities for <b>{selectedMapState}</b>.
+            </p>
+          )}
+        </div>
       </div>
+
+  <HelloHealthCard apiBase={apiBase} />
+</div>
+      
 
       <Card
         title="2) GET /state/read"
