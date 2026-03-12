@@ -1,12 +1,9 @@
-// import React, { useEffect, useMemo, useState } from "react";
 import React, { useMemo } from "react";
-// import { MapContainer, TileLayer, Popup, CircleMarker } from "react-leaflet";
 import { MapContainer, TileLayer, Popup, CircleMarker, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
 // Configuration constants
-// const DEFAULT_STATE_CODE = "NY";
-// const DEFAULT_CITY_LIMIT = 200;
+
 const MAP_CENTER = [39.5, -98.35];
 const MAP_ZOOM = 4;
 
