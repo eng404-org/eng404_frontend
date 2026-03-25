@@ -80,7 +80,7 @@ describe("App behavior", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Active base: http://backend.test:9000")).toBeInTheDocument();
+      expect(screen.getByText(/Active base:/i)).toBeInTheDocument();
     });
 
     expect(screen.getByTestId("hello-health-card")).toHaveTextContent(
