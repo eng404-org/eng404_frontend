@@ -289,7 +289,7 @@ export default function App() {
       }));
 
       setStateOptions(options);
-      
+
       if (options.length > 0 && !stateCode) {
         setStateCode(options[0].value);
       }
@@ -552,12 +552,26 @@ export default function App() {
               </p>
   
               <ul className="list">
-                {visibleCities.map((c, idx) => (
-                  <li key={idx} className="city-item">
-                    <div className="city-name">{c.name}</div>
-                    <div className="city-meta">{c.state_code}</div>
-                  </li>
-                ))}
+                {visibleCities.map((c, idx) => {
+                  const links = Array.isArray(c.links) ? c.links : [];
+
+                  return (
+                    <li key={idx} className="city-item">
+                      <div className="city-name">{c.name}</div>
+                      <div className="city-meta">{c.state_code}</div>
+
+                      {links.length > 0 && (
+                        <div className="city-links">
+                          {links.map((l, i) => (
+                            <span key={i} className="endpoint-chip muted">
+                              {l.rel}: {l.href}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                );
+              })}
               </ul>
   
               {visibleCities.length < filteredCities.length && (
