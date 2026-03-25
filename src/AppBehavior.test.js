@@ -132,7 +132,7 @@ describe("App behavior", () => {
     expect(within(filteredList).getByText("York")).toBeInTheDocument();
 
     await userEvent.clear(screen.getByPlaceholderText("e.g. York"));
-    await userEvent.selectOptions(screen.getByRole("combobox"), "desc");
+    await userEvent.selectOptions(screen.getAllByRole("combobox")[1], "desc");
 
     await waitFor(() => {
       expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 10)");
