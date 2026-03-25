@@ -121,6 +121,8 @@ export default function App() {
 
   const [globalError, setGlobalError] = useState(null);
 
+  const [stateOptions, setStateOptions] = useState([]);
+
   const citiesPath = useMemo(() => {
     const params = new URLSearchParams();
     if (stateCode.trim()) params.set("state_code", stateCode.trim());
@@ -264,6 +266,34 @@ export default function App() {
   useEffect(() => {
   loadCities();
   }, [loadCities]);
+
+  useEffect(() => {
+   const loadStateOptions = async () => {
+    try {
+      const data = await fetchJson(apiBase, "/state/read");
+
+      const rawStates = data?.States || data?.states || [];
+
+      const options = rawStates.map((s) => ({
+        value: s.state_code || s.code || s.State,
+        label: s.name
+          ? `${s.name} (${s.state_code || s.code || ""})`
+          : (s.state_code || s.code || s.State),
+      }));
+
+      setStateOptions(options);
+
+      
+      if (options.length > 0 && !stateCode) {
+        setStateCode(options[0].value);
+      }
+    } catch (e) {
+      console.error("Failed to load state options", e);
+    }
+  };
+
+  loadStateOptions();
+}, [apiBase]);
 
   const citiesArray = Array.isArray(cities)
   ? cities
@@ -428,12 +458,18 @@ export default function App() {
           <div className="controls">
             <label className="control">
               <span className="label">state_code</span>
-              <input
+              <select
                 className="input"
                 value={stateCode}
                 onChange={(e) => setStateCode(e.target.value)}
-                placeholder="NY"
-              />
+              >
+                <option value="">Select a state</option>
+                {stateOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </label>
   
             <label className="control">
