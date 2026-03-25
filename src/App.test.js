@@ -100,40 +100,44 @@ describe("App Component", () => {
     const refreshButton = screen.getByRole("button", { name: /refresh/i });
     fireEvent.click(refreshButton);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Records available:/i)).toBeInTheDocument();
-      expect(screen.getByText(/"NY": "New York"/i)).toBeInTheDocument();
-      expect(screen.getByText(/"CA": "California"/i)).toBeInTheDocument();
-    });
+   await waitFor(() => {
+  expect(screen.getByText(/Records available:/i)).toBeInTheDocument();
+  expect(screen.getAllByText(/New York/i)[0]).toBeInTheDocument();
+  expect(screen.getAllByText(/California/i)[0]).toBeInTheDocument();
+});
 
     expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/state/read");
   });
 
   test("clear button resets city filters to defaults", async () => {
-    render(<App />);
+  render(<App />);
 
-    await screen.findByText("New York");
+  await screen.findByText("New York");
 
-    const stateInput = screen.getByDisplayValue("NY");
-    const limitInput = screen.getByDisplayValue("10");
-    const searchInput = screen.getByPlaceholderText("e.g. York");
-    const sortSelect = screen.getByDisplayValue("A → Z");
+  await waitFor(() => {
+    expect(screen.getAllByRole("combobox")[0].options.length).toBeGreaterThan(1);
+  });
 
-    fireEvent.change(stateInput, { target: { value: "CA" } });
-    fireEvent.change(limitInput, { target: { value: "5" } });
-    fireEvent.change(searchInput, { target: { value: "San" } });
-    fireEvent.change(sortSelect, { target: { value: "desc" } });
+  const stateSelect = screen.getAllByRole("combobox")[0];
+  const limitInput = screen.getByDisplayValue("10");
+  const searchInput = screen.getByPlaceholderText("e.g. York");
+  const sortSelect = screen.getAllByRole("combobox")[1];
 
-    expect(screen.getByDisplayValue("CA")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("San")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Z → A")).toBeInTheDocument();
+  fireEvent.change(stateSelect, { target: { value: "CA" } });
+  fireEvent.change(limitInput, { target: { value: "5" } });
+  fireEvent.change(searchInput, { target: { value: "San" } });
+  fireEvent.change(sortSelect, { target: { value: "desc" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+  expect(stateSelect).toHaveValue("CA");
+  expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+  expect(screen.getByDisplayValue("San")).toBeInTheDocument();
+  expect(sortSelect).toHaveValue("desc");
 
-    expect(screen.getByDisplayValue("NY")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("10")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("e.g. York")).toHaveValue("");
-    expect(screen.getByDisplayValue("A → Z")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+
+  expect(stateSelect).toHaveValue("NY");
+  expect(screen.getByDisplayValue("10")).toBeInTheDocument();
+  expect(screen.getByPlaceholderText("e.g. York")).toHaveValue("");
+  expect(sortSelect).toHaveValue("asc");
   });
 });

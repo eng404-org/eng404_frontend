@@ -20,11 +20,35 @@ jest.mock("./HelloHealthCard", () => {
   };
 });
 
-describe("App behavior", () => {
-  beforeEach(() => {
-    global.fetch = jest.fn();
-    localStorage.clear();
+beforeEach(() => {
+  global.fetch = jest.fn((url) => {
+    if (String(url).includes("/state/read")) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: async () =>
+          JSON.stringify({
+            States: {
+              NY: "New York",
+              CA: "California",
+            },
+            "Number of Records": 2,
+          }),
+      });
+    }
+
+    // fallback，避免 undefined.text 报错
+    return Promise.resolve({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      text: async () => JSON.stringify({}),
+    });
   });
+
+  localStorage.clear();
+});
 
   test("loads and normalizes a saved API base from localStorage on mount", async () => {
     localStorage.setItem("eng404_api_base", "api.example.com/");
@@ -147,4 +171,4 @@ describe("App behavior", () => {
       expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 12)");
     });
   });
-});
+

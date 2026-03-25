@@ -272,7 +272,14 @@ export default function App() {
     try {
       const data = await fetchJson(apiBase, "/state/read");
 
-      const rawStates = data?.States || data?.states || [];
+      let rawStates = data?.States || data?.states || [];
+
+  if (!Array.isArray(rawStates)) {
+    rawStates = Object.entries(rawStates).map(([code, name]) => ({
+      state_code: code,
+      name,
+    }));
+  }
 
       const options = rawStates.map((s) => ({
         value: s.state_code || s.code || s.State,
