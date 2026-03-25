@@ -224,12 +224,17 @@ export default function App() {
     setMapCitiesErr(null);
     setSelectedMapState(stateCodeFromMap);
     setStateCode(stateCodeFromMap);
+    setCitiesErr(null);
   
     try {
       const path = `/cities?state_code=${encodeURIComponent(stateCodeFromMap)}&limit=20`;
       const data = await fetchJson(apiBase, path);
       const results = Array.isArray(data) ? data : data?.cities || data?.results || [];
       setMapCities(results);
+      setCities(results);
+      setVisibleCount(10);
+      setLimit("20");
+      setCityQuery("");
   
       setLastTouched((prev) => ({ ...prev, cities: new Date() }));
     } catch (e) {
@@ -285,7 +290,7 @@ export default function App() {
           {globalError}
         </div>
       )}
-
+  
       <header className="hero">
         <div>
           <div className="hero-badge">ENG404 Frontend Demo</div>
@@ -301,6 +306,7 @@ export default function App() {
             <span className="pill pill-quiet">Base saved locally</span>
           </div>
         </div>
+  
         <div className="hero-card">
           <p className="muted">How to read this page</p>
           <ul className="hero-list">
@@ -308,6 +314,7 @@ export default function App() {
             <li><b>Health</b> measures latency and shows raw JSON when needed.</li>
             <li><b>States & cities</b> cards reveal payloads with concise previews.</li>
           </ul>
+  
           <div className="api-base-panel">
             <label className="label">API base / port</label>
             <div className="api-base-controls">
@@ -335,6 +342,7 @@ export default function App() {
                 Use default
               </button>
             </div>
+  
             <div className="connection-row">
               <span
                 className={`status-dot ${
@@ -349,11 +357,12 @@ export default function App() {
                   : connectionStatus.message || "Offline"}
               </span>
             </div>
+  
             <p className="muted">Base URL is remembered locally; refreshes keep your choice.</p>
           </div>
         </div>
       </header>
-
+  
       <div className="meta-bar">
         <span className="meta-chip">
           <span className="chip-label">/hello</span>
@@ -368,7 +377,7 @@ export default function App() {
           <span>{formatTimestamp(lastTouched.cities)}</span>
         </span>
       </div>
-
+  
       <div className="layout-grid">
         <div>
           <GeoMap
@@ -376,34 +385,145 @@ export default function App() {
             cities={mapCities}
             onStateSelect={loadCitiesForMapState}
           />
-
+  
           <div className="selected-state-panel">
             <div className="selected-state-title">
               {selectedMapState ? `Selected state: ${selectedMapState}` : "Selected state: none"}
             </div>
-
+  
             {!selectedMapState && (
               <p className="map-helper-text">
                 Click a blue state marker to load cities on the map.
               </p>
             )}
-
-          {loadingMapCities && <p className="path">Loading cities from map selection...</p>}
-
-          {mapCitiesErr && <p className="path error-text">{mapCitiesErr}</p>}
-
-          {!loadingMapCities && !mapCitiesErr && selectedMapState && (
-            <p className="path">
-              Loaded <b>{mapCities.length}</b> cities for <b>{selectedMapState}</b>.
-            </p>
-          )}
+  
+            {loadingMapCities && <p className="path">Loading cities from map selection...</p>}
+  
+            {mapCitiesErr && <p className="path error-text">{mapCitiesErr}</p>}
+  
+            {!loadingMapCities && !mapCitiesErr && selectedMapState && (
+              <p className="path">
+                Loaded <b>{mapCities.length}</b> cities for <b>{selectedMapState}</b>.
+              </p>
+            )}
+          </div>
         </div>
+  
+        <Card
+          title="3) GET /cities (query params)"
+          subtitle="Filter cities by state and limit"
+          meta={formatTimestamp(lastTouched.cities)}
+        >
+          <div className="controls">
+            <label className="control">
+              <span className="label">state_code</span>
+              <input
+                className="input"
+                value={stateCode}
+                onChange={(e) => setStateCode(e.target.value)}
+                placeholder="NY"
+              />
+            </label>
+  
+            <label className="control">
+              <span className="label">limit</span>
+              <input
+                className="input"
+                type="number"
+                min="1"
+                max="200"
+                value={limit}
+                onChange={(e) => setLimit(e.target.value)}
+              />
+            </label>
+  
+            <label className="control">
+              <span className="label">search</span>
+              <input
+                className="input"
+                value={cityQuery}
+                onChange={(e) => {
+                  setCityQuery(e.target.value);
+                  setVisibleCount(10);
+                }}
+                placeholder="e.g. York"
+              />
+            </label>
+  
+            <label className="control">
+              <span className="label">sort</span>
+              <select
+                className="input"
+                value={sortDir}
+                onChange={(e) => setSortDir(e.target.value)}
+              >
+                <option value="asc">A → Z</option>
+                <option value="desc">Z → A</option>
+              </select>
+            </label>
+  
+            <div className="control-group">
+              <button className="btn" onClick={loadCities} disabled={loadingCities}>
+                {loadingCities ? "Loading..." : "Run query"}
+              </button>
+              <button
+                className="btn btn-ghost"
+                onClick={() => {
+                  setCities(null);
+                  setCitiesErr(null);
+                  setStateCode(DEFAULT_STATE_CODE);
+                  setLimit(DEFAULT_LIMIT);
+                  setCityQuery("");
+                  setSortDir("asc");
+                  setVisibleCount(10);
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+  
+          <div className="path-row">
+            <span className="endpoint-chip muted">Path: {citiesPath}</span>
+            <span className="muted">Auto-loads on mount with NY & limit 10.</span>
+          </div>
+  
+          {citiesErr && <p className="path error-text">{citiesErr}</p>}
+  
+          {loadingCities && <p className="path">Crunching results...</p>}
+  
+          {Array.isArray(citiesArray) && (
+            <>
+              <p className="meta">
+                Results: <b>{filteredCities.length}</b> (showing {visibleCities.length})
+              </p>
+  
+              <ul className="list">
+                {visibleCities.map((c, idx) => (
+                  <li key={idx} className="city-item">
+                    <div className="city-name">{c.name}</div>
+                    <div className="city-meta">{c.state_code}</div>
+                  </li>
+                ))}
+              </ul>
+  
+              {visibleCities.length < filteredCities.length && (
+                <button
+                  className="btn"
+                  onClick={() => setVisibleCount((n) => n + 10)}
+                >
+                  Load more
+                </button>
+              )}
+            </>
+          )}
+  
+          {cities && !Array.isArray(cities) && <JsonBox value={cities} />}
+        </Card>
       </div>
-
-  <HelloHealthCard apiBase={apiBase} />
-</div>
-      
-
+  
+      <HelloHealthCard apiBase={apiBase} />
+  
       <Card
         title="2) GET /state/read"
         subtitle="Full state catalog"
@@ -415,15 +535,15 @@ export default function App() {
             {loadingStates ? "Loading..." : "Refresh"}
           </button>
         </div>
-
+  
         {statesErr && <p className="path error-text">{statesErr}</p>}
-
+  
         {loadingStates && <p className="path">Contacting backend...</p>}
-
+  
         {statesResp && (
           <>
             <p className="meta">Records available: <b>{statesResp["Number of Records"]}</b></p>
-
+  
             <div className="card-subsection">
               <p className="muted">Preview (first 10 to keep things tidy)</p>
               <JsonBox
@@ -438,111 +558,6 @@ export default function App() {
           </>
         )}
       </Card>
-
-      <Card
-        title="3) GET /cities (query params)"
-        subtitle="Filter cities by state and limit"
-        meta={formatTimestamp(lastTouched.cities)}
-      >
-        <div className="controls">
-          <label className="control">
-            <span className="label">state_code</span>
-            <input className="input" value={stateCode} onChange={(e) => setStateCode(e.target.value)} placeholder="NY" />
-          </label>
-          <label className="control">
-            <span className="label">limit</span>
-            <input
-              className="input"
-              type="number"
-              min="1"
-              max="200"
-              value={limit}
-              onChange={(e) => setLimit(e.target.value)}
-            />
-          </label>
-          <label className="control">
-            <span className="label">search</span>
-            <input
-              className="input"
-              value={cityQuery}
-              onChange={(e) => {
-                setCityQuery(e.target.value);
-                setVisibleCount(10);
-              }}
-              placeholder="e.g. York"
-            />
-          </label>
-
-          <label className="control">
-            <span className="label">sort</span>
-            <select
-              className="input"
-              value={sortDir}
-              onChange={(e) => setSortDir(e.target.value)}
-            >
-              <option value="asc">A → Z</option>
-              <option value="desc">Z → A</option>
-            </select>
-          </label>
-
-          <div className="control-group">
-            <button className="btn" onClick={loadCities} disabled={loadingCities}>
-              {loadingCities ? "Loading..." : "Run query"}
-            </button>
-            <button
-              className="btn btn-ghost"
-              onClick={() => {
-                setCities(null);
-                setCitiesErr(null);
-                setStateCode(DEFAULT_STATE_CODE);
-                setLimit(DEFAULT_LIMIT);
-                setCityQuery("");
-                setSortDir("asc");
-                setVisibleCount(10);
-              }}
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-
-        <div className="path-row">
-          <span className="endpoint-chip muted">Path: {citiesPath}</span>
-          <span className="muted">Auto-loads on mount with NY & limit 10.</span>
-        </div>
-
-        {citiesErr && <p className="path error-text">{citiesErr}</p>}
-
-        {loadingCities && <p className="path">Crunching results...</p>}
-
-        {Array.isArray(citiesArray) && (
-          <>
-            <p className="meta">
-              Results: <b>{filteredCities.length}</b> (showing {visibleCities.length})
-            </p>
-
-            <ul className="list">
-              {visibleCities.map((c, idx) => (
-                <li key={idx} className="city-item">
-                  <div className="city-name">{c.name}</div>
-                  <div className="city-meta">{c.state_code}</div>
-                </li>
-              ))}
-            </ul>
-
-            {visibleCities.length < filteredCities.length && (
-              <button
-                className="btn"
-                onClick={() => setVisibleCount((n) => n + 10)}
-              >
-                Load more
-              </button>
-            )}
-          </>
-        )}
-
-        {cities && !Array.isArray(cities) && <JsonBox value={cities} />}
-      </Card>
     </div>
   );
-}
+              }
