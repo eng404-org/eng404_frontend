@@ -203,17 +203,28 @@ export default function App() {
     setGlobalError(null);
     setLoadingCities(true);
     setCitiesErr(null);
+  
     try {
-      setCities(await fetchJson(apiBase, citiesPath));
+      const data = await fetchJson(apiBase, citiesPath);
+      const results = Array.isArray(data) ? data : data?.cities || data?.results || [];
+  
+      setCities(data);
+      setMapCities(results);
+  
+      const code = stateCode.trim().toUpperCase();
+      if (code) {
+        setSelectedMapState(code);
+      }
+  
       setVisibleCount(10);
       setLastTouched((prev) => ({ ...prev, cities: new Date() }));
     } catch (e) {
       setCitiesErr(e.message);
       setGlobalError(ERROR_MESSAGES.FETCH_ERROR);
     } finally {
-    setLoadingCities(false);
+      setLoadingCities(false);
     }
-  }, [apiBase, citiesPath]);
+  }, [apiBase, citiesPath, stateCode]);
 
   
   const loadCitiesForMapState = useCallback(async (stateCodeFromMap) => {
