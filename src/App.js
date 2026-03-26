@@ -3,6 +3,7 @@ import "./App.css";
 import "leaflet/dist/leaflet.css";
 import GeoMap from "./GeoMap";
 import HelloHealthCard from "./HelloHealthCard";
+import CityComparison from "./CityComparison";
 
 const DEFAULT_API_URL =
   process.env.REACT_APP_API_URL ||
@@ -71,6 +72,22 @@ function JsonBox({ value }) {
 
 export default function App() {
   const [lastTouched, setLastTouched] = useState({ states: null, cities: null });
+
+  const [selectedCities, setSelectedCities] = useState([]);
+
+  const toggleSelectCity = useCallback((city) => {
+    setSelectedCities((prev) => {
+      const exists = prev.find((c) => c.name === city.name);
+      if (exists) {
+        return prev.filter((c) => c.name !== city.name);
+      }
+      return prev.length < 3 ? [...prev, city] : prev;
+    });
+  }, []);
+
+  const removeSelectedCity = useCallback((cityName) => {
+    setSelectedCities((prev) => prev.filter((c) => c.name !== cityName));
+  }, []);
 
   const readStoredBase = useCallback(() => {
     try {
@@ -561,6 +578,7 @@ export default function App() {
               <ul className="list">
                 {visibleCities.map((c, idx) => {
                   const links = Array.isArray(c.links) ? c.links : [];
+                  const isSelected = selectedCities.some((sc) => sc.name === c.name);
 
                   return (
                     <li key={idx} className="city-item">
@@ -576,6 +594,22 @@ export default function App() {
                           ))}
                         </div>
                       )}
+
+                      <div style={{ marginTop: 8 }}>
+                        <button
+                          className="btn"
+                          onClick={() => toggleSelectCity(c)}
+                          style={{
+                            background: isSelected ? "#3b82f6" : "#d1d5db",
+                            color: isSelected ? "white" : "#1f2937",
+                            fontSize: 12,
+                            padding: "6px 12px",
+                          }}
+                        >
+                          {isSelected ? "✓ Compare" : "Compare"}
+                          {selectedCities.length >= 3 && !isSelected && " (max 3)"}
+                        </button>
+                      </div>
                     </li>
                 );
               })}
@@ -594,6 +628,10 @@ export default function App() {
   
           {cities && !Array.isArray(cities) && <JsonBox value={cities} />}
         </Card>
+
+        {selectedCities.length > 0 && (
+          <CityComparison cities={selectedCities} onRemoveCity={removeSelectedCity} />
+        )}
       </div>
     </div>
   );
