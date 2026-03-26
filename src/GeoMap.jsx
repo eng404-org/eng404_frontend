@@ -7,6 +7,23 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 const MAP_CENTER = [39.5, -98.35];
 const MAP_ZOOM = 4;
 
+// State marker styling configurations
+const SELECTED_STATE_MARKER = {
+  radius: 10,
+  weight: 3,
+  color: "#1d4ed8",
+  fillColor: "#3b82f6",
+  fillOpacity: 0.9,
+};
+
+const UNSELECTED_STATE_MARKER = {
+  radius: 7,
+  weight: 1,
+  color: "#64748b",
+  fillColor: "#94a3b8",
+  fillOpacity: 0.9,
+};
+
 const STATE_MARKERS = [
   { code: "NY", name: "New York", lat: 42.9, lng: -75.5 },
   { code: "CA", name: "California", lat: 37.25, lng: -119.75 },
@@ -75,13 +92,8 @@ export default function GeoMap({ selectedState, cities = [], onStateSelect }) {
           <CircleMarker
             key={state.code}
             center={[state.lat, state.lng]}
-            radius={selectedState === state.code ? 10 : 7}
-            pathOptions={{
-              weight: selectedState === state.code ? 3 : 1,
-              color: selectedState === state.code ? "#1d4ed8" : "#64748b",
-              fillColor: selectedState === state.code ? "#3b82f6" : "#94a3b8",
-              fillOpacity: 0.9
-            }}
+            radius={selectedState === state.code ? SELECTED_STATE_MARKER.radius : UNSELECTED_STATE_MARKER.radius}
+            pathOptions={selectedState === state.code ? SELECTED_STATE_MARKER : UNSELECTED_STATE_MARKER}
             eventHandlers={{
               click: () => onStateSelect && onStateSelect(state.code)
             }}
