@@ -19,7 +19,7 @@ describe('HelloHealthCard Component', () => {
       text: async () => JSON.stringify({ status: 'ok' }),
     });
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     expect(button).toBeInTheDocument();
   });
 
@@ -33,7 +33,7 @@ describe('HelloHealthCard Component', () => {
       )
     );
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     
     fireEvent.click(button);
     expect(screen.getByText(/checking/i)).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('HelloHealthCard Component', () => {
     });
     
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     fireEvent.click(button);
     
     await waitFor(() => {
@@ -63,7 +63,7 @@ describe('HelloHealthCard Component', () => {
     });
     
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     fireEvent.click(button);
     
     await waitFor(() => {
@@ -78,7 +78,7 @@ describe('HelloHealthCard Component', () => {
     });
     
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     fireEvent.click(button);
     
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe('HelloHealthCard Component', () => {
     fetch.mockRejectedValueOnce(new Error(errorMessage));
     
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     fireEvent.click(button);
     
     await waitFor(() => {
@@ -107,7 +107,7 @@ describe('HelloHealthCard Component', () => {
     });
     
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     fireEvent.click(button);
     
     await waitFor(() => {
@@ -127,7 +127,7 @@ describe('HelloHealthCard Component', () => {
     );
     
     render(<HelloHealthCard />);
-    const button = screen.getByText(/run health check/i);
+    const button = screen.getByRole('button', { name: /check backend status/i });
     
     fireEvent.click(button);
     expect(button).toBeDisabled();

@@ -55,12 +55,12 @@ describe('GeoMap Component', () => {
 
   test('renders geographic map title', () => {
     render(<GeoMap cities={[]} />);
-    expect(screen.getByText(/geographic map/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /city distribution map/i })).toBeInTheDocument();
   });
 
-  test('renders selected state summary text', () => {
-    render(<GeoMap selectedState="NY" cities={[]} />);
-    expect(screen.getByText(/selected state: ny/i)).toBeInTheDocument();
+  test('renders helper copy under title', () => {
+    render(<GeoMap cities={[]} />);
+    expect(screen.getByText(/auto-loads top ny cities/i)).toBeInTheDocument();
   });
 
   test('renders state markers plus city markers', () => {

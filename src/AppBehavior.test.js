@@ -21,30 +21,11 @@ jest.mock("./HelloHealthCard", () => {
 });
 
 beforeEach(() => {
-  global.fetch = jest.fn((url) => {
-    if (String(url).includes("/state/read")) {
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        statusText: "OK",
-        text: async () =>
-          JSON.stringify({
-            States: {
-              NY: "New York",
-              CA: "California",
-            },
-            "Number of Records": 2,
-          }),
-      });
-    }
-
-    // fallback，避免 undefined.text 报错
-    return Promise.resolve({
-      ok: true,
-      status: 200,
-      statusText: "OK",
-      text: async () => JSON.stringify({}),
-    });
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    text: async () => JSON.stringify({}),
   });
 
   localStorage.clear();
@@ -53,21 +34,39 @@ beforeEach(() => {
   test("loads and normalizes a saved API base from localStorage on mount", async () => {
     localStorage.setItem("eng404_api_base", "api.example.com/");
 
-    fetch
-      .mockResolvedValueOnce({
+    fetch.mockImplementation((url) => {
+      const href = String(url);
+      if (href.includes("/cities")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify([]),
+        });
+      }
+
+      if (href.includes("/state/read")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify({
+            States: {
+              NY: "New York",
+              CA: "California",
+            },
+            "Number of Records": 2,
+          }),
+        });
+      }
+
+      return Promise.resolve({
         ok: true,
-        text: async () => JSON.stringify({ message: "hello" }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify([]),
+        text: async () => JSON.stringify({}),
       });
+    });
 
     render(<App />);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith("http://api.example.com/hello");
       expect(fetch).toHaveBeenCalledWith("http://api.example.com/cities?state_code=NY&limit=10");
+      expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/read");
     });
 
     expect(screen.getByDisplayValue("http://api.example.com")).toBeInTheDocument();
@@ -78,19 +77,37 @@ beforeEach(() => {
   });
 
   test("applies a new API base after a successful ping and persists it", async () => {
-    fetch
-      .mockResolvedValueOnce({
+    fetch.mockImplementation((url) => {
+      const href = String(url);
+      if (href.includes("/hello")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify({ message: "new base hello" }),
+        });
+      }
+
+      if (href.includes("/cities")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify([]),
+        });
+      }
+
+      if (href.includes("/state/read")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify({
+            States: { NY: "New York" },
+            "Number of Records": 1,
+          }),
+        });
+      }
+
+      return Promise.resolve({
         ok: true,
-        text: async () => JSON.stringify({ message: "initial hello" }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify([]),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify({ message: "new base hello" }),
+        text: async () => JSON.stringify({}),
       });
+    });
 
     render(<App />);
 
@@ -104,7 +121,7 @@ beforeEach(() => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Active base:/i)).toBeInTheDocument();
+      expect(fetch).toHaveBeenCalledWith("http://backend.test:9000/cities?state_code=NY&limit=10");
     });
 
     expect(screen.getByTestId("hello-health-card")).toHaveTextContent(
@@ -129,21 +146,35 @@ beforeEach(() => {
       { name: "York", state_code: "PA" },
     ];
 
-    fetch
-      .mockResolvedValueOnce({
+    fetch.mockImplementation((url) => {
+      const href = String(url);
+      if (href.includes("/cities")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify(cities),
+        });
+      }
+
+      if (href.includes("/state/read")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () => JSON.stringify({
+            States: { NY: "New York", CA: "California" },
+            "Number of Records": 2,
+          }),
+        });
+      }
+
+      return Promise.resolve({
         ok: true,
-        text: async () => JSON.stringify({ message: "hello" }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(cities),
+        text: async () => JSON.stringify({}),
       });
+    });
 
     render(<App />);
 
-    await waitFor(() => {
-      expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 10)");
-    });
+    await screen.findByText(/Results:/i);
+    expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 10)");
 
     await userEvent.type(screen.getByPlaceholderText("e.g. York"), "yo");
 
@@ -171,4 +202,3 @@ beforeEach(() => {
       expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 12)");
     });
   });
-
