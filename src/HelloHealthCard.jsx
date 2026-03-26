@@ -12,6 +12,20 @@ const ERROR_BOX_STYLE = {
   fontSize: 14,
 };
 
+// Health badge styling
+const HEALTH_BADGE_STYLE = {
+  padding: "6px 10px",
+  borderRadius: 999,
+  fontWeight: 600,
+  fontSize: 12,
+  border: "1px solid rgba(0,0,0,0.08)",
+};
+
+const HEALTH_STATUS_COLORS = {
+  online: "rgba(34,197,94,0.12)",
+  offline: "rgba(239,68,68,0.12)",
+};
+
 const normalizeBase = (value) => {
   const trimmed = (value || "").trim();
   if (!trimmed) return DEFAULT_API_URL.replace(/\/+$/, "");
@@ -39,12 +53,8 @@ function HealthBadge({ ok }) {
   return (
     <span
       style={{
-        padding: "6px 10px",
-        borderRadius: 999,
-        fontWeight: 600,
-        fontSize: 12,
-        border: "1px solid rgba(0,0,0,0.08)",
-        background: ok ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)",
+        ...HEALTH_BADGE_STYLE,
+        background: ok ? HEALTH_STATUS_COLORS.online : HEALTH_STATUS_COLORS.offline,
       }}
     >
       {ok ? "✅ Online" : "❌ Offline"}
