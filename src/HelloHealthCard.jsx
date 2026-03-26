@@ -96,7 +96,7 @@ export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
       <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <button className="btn" onClick={runCheck} disabled={loading}>
-            {loading ? "Checking..." : "Run health check"}
+            {loading ? "Checking..." : "Check backend status"}
           </button>
 
           <span style={{ opacity: 0.75, fontSize: 13 }}>

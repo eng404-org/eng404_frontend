@@ -57,9 +57,9 @@ export default function GeoMap({ selectedState, cities = [], onStateSelect }) {
 
   return (
     <div className="card">
-      <h2 className="card-title">Geographic Map</h2>
+      <h2 className="card-title">City Distribution Map</h2>
       <p className="muted">
-        Selected state: {selectedState || "none"} | Cities plotted: {points.length}
+        Auto-loads top NY cities and groups nearby markers.
       </p>
 
       <div style={{ height: 420, borderRadius: 12, overflow: "hidden" }}>

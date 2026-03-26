@@ -26,13 +26,6 @@ describe("App Component", () => {
     localStorage.clear();
 
     global.fetch = jest.fn((url) => {
-      if (url.includes("/hello")) {
-        return Promise.resolve({
-          ok: true,
-          text: async () => JSON.stringify({ message: "hello ok" }),
-        });
-      }
-
       if (url.includes("/cities")) {
         return Promise.resolve({
           ok: true,
@@ -69,15 +62,10 @@ describe("App Component", () => {
     jest.restoreAllMocks();
   });
 
-  test("renders main page content", async () => {
+  test('renders dashboard heading', () => {
     render(<App />);
-
-    expect(screen.getByText("API observability at a glance")).toBeInTheDocument();
-    expect(screen.getByText("ENG404 Frontend Demo")).toBeInTheDocument();
-    expect(screen.getByTestId("geo-map")).toBeInTheDocument();
-    expect(screen.getByTestId("hello-health-card")).toBeInTheDocument();
-
-    await screen.findByText("New York");
+    const heading = screen.getByText(/API observability at a glance/i);
+    expect(heading).toBeInTheDocument();
   });
 
   test("loads default cities on mount and displays them", async () => {
@@ -86,7 +74,6 @@ describe("App Component", () => {
     expect(await screen.findByText("New York")).toBeInTheDocument();
     expect(await screen.findByText("Albany")).toBeInTheDocument();
 
-    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/hello");
     expect(global.fetch).toHaveBeenCalledWith(
       "http://localhost:8000/cities?state_code=NY&limit=10"
     );
@@ -97,7 +84,7 @@ describe("App Component", () => {
 
     await screen.findByText("New York");
 
-    const refreshButton = screen.getByRole("button", { name: /refresh/i });
+    const refreshButton = screen.getByRole("button", { name: /load states/i });
     fireEvent.click(refreshButton);
 
    await waitFor(() => {

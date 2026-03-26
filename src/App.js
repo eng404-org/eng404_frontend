@@ -70,7 +70,7 @@ function JsonBox({ value }) {
 }
 
 export default function App() {
-  const [lastTouched, setLastTouched] = useState({ hello: null, states: null, cities: null });
+  const [lastTouched, setLastTouched] = useState({ states: null, cities: null });
 
   const readStoredBase = useCallback(() => {
     try {
@@ -88,12 +88,6 @@ export default function App() {
   const [apiBase, setApiBase] = useState(initialBase);
   const [apiBaseDraft, setApiBaseDraft] = useState(initialBase);
   const [connectionStatus, setConnectionStatus] = useState({ ok: null, base: null, latency: null, message: "" });
-
-  // Endpoint 1: /hello
-  // eslint-disable-next-line no-unused-vars
-  const [hello, setHello] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const [helloErr, setHelloErr] = useState(null);
 
   // Endpoint 2: /state/read
   const [statesResp, setStatesResp] = useState(null);
@@ -115,7 +109,6 @@ export default function App() {
   const [mapCitiesErr, setMapCitiesErr] = useState(null);
 
   // eslint-disable-next-line no-unused-vars
-  const [loadingHello, setLoadingHello] = useState(false);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
 
@@ -147,13 +140,11 @@ export default function App() {
     const cleaned = normalizeBase(apiBaseDraft);
     const started = performance.now();
     setTestingBase(true);
-    setConnectionStatus({ ok: null, base: cleaned, latency: null, message: "Pinging /hello..." });
+    setConnectionStatus({ ok: null, base: cleaned, latency: null, message: "Testing connection..." });
     try {
-      const resp = await fetchJson(cleaned, "/hello");
+      await fetchJson(cleaned, "/hello");
       const latency = Math.round(performance.now() - started);
       setApiBase(cleaned);
-      setHello(resp);
-      setLastTouched((prev) => ({ ...prev, hello: new Date() }));
       setConnectionStatus({ ok: true, base: cleaned, latency, message: "Connected" });
     } catch (e) {
       const latency = Math.round(performance.now() - started);
@@ -168,21 +159,6 @@ export default function App() {
       localStorage.setItem(STORAGE_KEY, apiBase);
     } catch {
       // ignore persistence errors (e.g., private mode)
-    }
-  }, [apiBase]);
-
-  const loadHello = useCallback(async () => {
-    setGlobalError(null);
-    setLoadingHello(true);
-    setHelloErr(null);
-    try {
-      setHello(await fetchJson(apiBase, "/hello"));
-      setLastTouched((prev) => ({ ...prev, hello: new Date() }));
-    } catch (e) {
-      setHelloErr(e.message);
-      setGlobalError(ERROR_MESSAGES.FETCH_ERROR);
-    } finally {
-    setLoadingHello(false);
     }
   }, [apiBase]);
 
@@ -258,10 +234,6 @@ export default function App() {
       setLoadingMapCities(false);
     }
   }, [apiBase]);
-
-  useEffect(() => {
-    loadHello();
-  }, [loadHello]);
 
   useEffect(() => {
   loadCities();
@@ -412,10 +384,6 @@ export default function App() {
   
       <div className="meta-bar">
         <span className="meta-chip">
-          <span className="chip-label">/hello</span>
-          <span>{formatTimestamp(lastTouched.hello)}</span>
-        </span>
-        <span className="meta-chip">
           <span className="chip-label">/state/read</span>
           <span>{formatTimestamp(lastTouched.states)}</span>
         </span>
@@ -457,8 +425,8 @@ export default function App() {
         </div>
   
         <Card
-          title="3) GET /cities (query params)"
-          subtitle="Filter cities by state and limit"
+          title="3) City Search"
+          subtitle="Find cities by state, limit, and search term"
           meta={formatTimestamp(lastTouched.cities)}
         >
           <div className="controls">
@@ -517,7 +485,7 @@ export default function App() {
   
             <div className="control-group">
               <button className="btn" onClick={loadCities} disabled={loadingCities}>
-                {loadingCities ? "Loading..." : "Run query"}
+                {loadingCities ? "Loading..." : "Search cities"}
               </button>
               <button
                 className="btn btn-ghost"
@@ -592,14 +560,14 @@ export default function App() {
       <HelloHealthCard apiBase={apiBase} />
   
       <Card
-        title="2) GET /state/read"
-        subtitle="Full state catalog"
+        title="2) State Catalog"
+        subtitle="Browse all available states from the backend"
         meta={formatTimestamp(lastTouched.states)}
       >
         <div className="card-toolbar">
           <div className="endpoint-chip">GET /state/read</div>
           <button className="btn" onClick={loadStates} disabled={loadingStates}>
-            {loadingStates ? "Loading..." : "Refresh"}
+            {loadingStates ? "Loading..." : "Load states"}
           </button>
         </div>
   
