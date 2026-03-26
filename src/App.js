@@ -424,6 +424,45 @@ export default function App() {
           </div>
         </div>
   
+        <HelloHealthCard apiBase={apiBase} />
+      </div>
+  
+      <div className="layout-grid">
+        <Card
+          title="2) State Catalog"
+          subtitle="Browse all available states from the backend"
+          meta={formatTimestamp(lastTouched.states)}
+        >
+          <div className="card-toolbar">
+            <div className="endpoint-chip">GET /state/read</div>
+            <button className="btn" onClick={loadStates} disabled={loadingStates}>
+              {loadingStates ? "Loading..." : "Load states"}
+            </button>
+          </div>
+  
+          {statesErr && <p className="path error-text">{statesErr}</p>}
+  
+          {loadingStates && <p className="path">Contacting backend...</p>}
+  
+          {statesResp && (
+            <>
+              <p className="meta">Records available: <b>{statesResp["Number of Records"]}</b></p>
+  
+              <div className="card-subsection">
+                <p className="muted">Preview (first 10 to keep things tidy)</p>
+                <JsonBox
+                  value={{
+                    "States Preview":
+                      Array.isArray(statesResp["States"])
+                        ? statesResp["States"].slice(0, 10)
+                        : Object.fromEntries(Object.entries(statesResp["States"] || {}).slice(0, 10)),
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </Card>
+  
         <Card
           title="3) City Search"
           subtitle="Find cities by state, limit, and search term"
@@ -556,43 +595,6 @@ export default function App() {
           {cities && !Array.isArray(cities) && <JsonBox value={cities} />}
         </Card>
       </div>
-  
-      <HelloHealthCard apiBase={apiBase} />
-  
-      <Card
-        title="2) State Catalog"
-        subtitle="Browse all available states from the backend"
-        meta={formatTimestamp(lastTouched.states)}
-      >
-        <div className="card-toolbar">
-          <div className="endpoint-chip">GET /state/read</div>
-          <button className="btn" onClick={loadStates} disabled={loadingStates}>
-            {loadingStates ? "Loading..." : "Load states"}
-          </button>
-        </div>
-  
-        {statesErr && <p className="path error-text">{statesErr}</p>}
-  
-        {loadingStates && <p className="path">Contacting backend...</p>}
-  
-        {statesResp && (
-          <>
-            <p className="meta">Records available: <b>{statesResp["Number of Records"]}</b></p>
-  
-            <div className="card-subsection">
-              <p className="muted">Preview (first 10 to keep things tidy)</p>
-              <JsonBox
-                value={{
-                  "States Preview":
-                    Array.isArray(statesResp["States"])
-                      ? statesResp["States"].slice(0, 10)
-                      : Object.fromEntries(Object.entries(statesResp["States"] || {}).slice(0, 10)),
-                }}
-              />
-            </div>
-          </>
-        )}
-      </Card>
     </div>
   );
               }
