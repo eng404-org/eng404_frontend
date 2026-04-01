@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 /**
  * Custom hook for loading dropdown options from HATEOAS endpoints
@@ -12,6 +12,9 @@ export function useDropdownOptions(apiBase, endpoint, queryParams = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Memoize queryParams to prevent unnecessary re-renders
+  const memoizedParams = useMemo(() => JSON.stringify(queryParams), [queryParams]);
+
   useEffect(() => {
     if (!apiBase || !endpoint) return;
 
@@ -20,7 +23,8 @@ export function useDropdownOptions(apiBase, endpoint, queryParams = {}) {
       setError(null);
       try {
         // Build query string if params provided
-        const queryString = Object.entries(queryParams)
+        const params = JSON.parse(memoizedParams);
+        const queryString = Object.entries(params)
           .filter(([_, v]) => v !== null && v !== undefined)
           .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
           .join("&");
@@ -53,7 +57,7 @@ export function useDropdownOptions(apiBase, endpoint, queryParams = {}) {
     };
 
     loadOptions();
-  }, [apiBase, endpoint, queryParams]);
+  }, [apiBase, endpoint, memoizedParams]);
 
   return { options, loading, error };
 }

@@ -43,15 +43,14 @@ beforeEach(() => {
         });
       }
 
-      if (href.includes("/state/read")) {
+      if (href.includes("/state/options")) {
         return Promise.resolve({
           ok: true,
           text: async () => JSON.stringify({
-            States: {
-              NY: "New York",
-              CA: "California",
-            },
-            "Number of Records": 2,
+            options: [
+              { code: "NY", name: "New York" },
+              { code: "CA", name: "California" },
+            ],
           }),
         });
       }
@@ -66,7 +65,7 @@ beforeEach(() => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith("http://api.example.com/cities?state_code=NY&limit=10");
-      expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/read");
+      expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/options");
     });
 
     expect(screen.getByDisplayValue("http://api.example.com")).toBeInTheDocument();
@@ -76,7 +75,7 @@ beforeEach(() => {
     );
   });
 
-  test("applies a new API base after a successful ping and persists it", async () => {
+  test("applies a new API base after successful state/options fetch and persists it", async () => {
     fetch.mockImplementation((url) => {
       const href = String(url);
       if (href.includes("/hello")) {
@@ -93,12 +92,11 @@ beforeEach(() => {
         });
       }
 
-      if (href.includes("/state/read")) {
+      if (href.includes("/state/options")) {
         return Promise.resolve({
           ok: true,
           text: async () => JSON.stringify({
-            States: { NY: "New York" },
-            "Number of Records": 1,
+            options: [{ code: "NY", name: "New York" }],
           }),
         });
       }
@@ -155,12 +153,14 @@ beforeEach(() => {
         });
       }
 
-      if (href.includes("/state/read")) {
+      if (href.includes("/state/options")) {
         return Promise.resolve({
           ok: true,
           text: async () => JSON.stringify({
-            States: { NY: "New York", CA: "California" },
-            "Number of Records": 2,
+            options: [
+              { code: "NY", name: "New York" },
+              { code: "CA", name: "California" },
+            ],
           }),
         });
       }

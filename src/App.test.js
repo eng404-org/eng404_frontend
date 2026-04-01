@@ -34,26 +34,36 @@ describe("App Component", () => {
               { name: "New York", state_code: "NY" },
               { name: "Albany", state_code: "NY" },
             ]),
+          json: async () => [
+            { name: "New York", state_code: "NY" },
+            { name: "Albany", state_code: "NY" },
+          ],
         });
       }
 
-      if (url.includes("/state/read")) {
+      if (url.includes("/state/options")) {
         return Promise.resolve({
           ok: true,
           text: async () =>
             JSON.stringify({
-              "Number of Records": 2,
-              States: {
-                NY: "New York",
-                CA: "California",
-              },
+              options: [
+                { code: "NY", name: "New York" },
+                { code: "CA", name: "California" },
+              ],
             }),
+          json: async () => ({
+            options: [
+              { code: "NY", name: "New York" },
+              { code: "CA", name: "California" },
+            ],
+          }),
         });
       }
 
       return Promise.resolve({
         ok: true,
         text: async () => JSON.stringify({}),
+        json: async () => ({}),
       });
     });
   });
@@ -93,7 +103,7 @@ describe("App Component", () => {
   expect(screen.getAllByText(/California/i)[0]).toBeInTheDocument();
 });
 
-    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/state/read");
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/state/options");
   });
 
   test("clear button resets city filters to defaults", async () => {
