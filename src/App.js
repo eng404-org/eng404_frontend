@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import GeoMap from "./GeoMap";
 import HelloHealthCard from "./HelloHealthCard";
 import CityComparison from "./CityComparison";
+import { useDropdownOptions, transformSelectOptions } from "./useDropdownOptions";
 
 const DEFAULT_API_URL =
   process.env.REACT_APP_API_URL ||
@@ -253,42 +254,23 @@ export default function App() {
   }, [apiBase]);
 
   useEffect(() => {
-  loadCities();
+    loadCities();
   }, [loadCities]);
 
+  // Load state options from HATEOAS endpoint
+  const { options: stateOptionsRaw, loading: loadingStateOptions, error: stateOptionsError } = 
+    useDropdownOptions(apiBase, "/state/options");
+
   useEffect(() => {
-  const loadStateOptions = async () => {
-    try {
-      const data = await fetchJson(apiBase, "/state/read");
-
-      let rawStates = data?.States || data?.states || [];
-
-      if (!Array.isArray(rawStates)) {
-        rawStates = Object.entries(rawStates).map(([code, name]) => ({
-          state_code: code,
-          name,
-        }));
-      }
-
-      const options = rawStates.map((s) => ({
-        value: s.state_code || s.code || s.State,
-        label: s.name
-          ? `${s.name} (${s.state_code || s.code || ""})`
-          : (s.state_code || s.code || s.State),
-      }));
-
+    if (Array.isArray(stateOptionsRaw) && stateOptionsRaw.length > 0) {
+      const options = transformSelectOptions(stateOptionsRaw, "code", "name");
       setStateOptions(options);
-
+      
       if (options.length > 0 && !stateCode) {
         setStateCode(options[0].value);
       }
-    } catch (e) {
-      console.error("Failed to load state options", e);
     }
-  };
-
-  loadStateOptions();
-}, [apiBase, stateCode]);
+  }, [stateOptionsRaw, stateCode]);
 
   const citiesArray = Array.isArray(cities)
   ? cities
