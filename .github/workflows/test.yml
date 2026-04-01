@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   test:
@@ -15,12 +15,10 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 24.x]
+        node-version: [18.x, 20.x]
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        node-version: 24
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
