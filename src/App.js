@@ -258,7 +258,7 @@ export default function App() {
   }, [loadCities]);
 
   // Load state options from HATEOAS endpoint
-  const { options: stateOptionsRaw, loading: loadingStateOptions, error: stateOptionsError } = 
+  const { options: stateOptionsRaw } = 
     useDropdownOptions(apiBase, "/state/options");
 
   useEffect(() => {
