@@ -16,14 +16,40 @@ const ERROR_BOX_STYLE = {
 const HEALTH_BADGE_STYLE = {
   padding: "6px 10px",
   borderRadius: 999,
-  fontWeight: 600,
+  fontWeight: 700,
   fontSize: 12,
   border: "1px solid rgba(0,0,0,0.08)",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  letterSpacing: "0.01em",
 };
 
-const HEALTH_STATUS_COLORS = {
-  online: "rgba(34,197,94,0.12)",
-  offline: "rgba(239,68,68,0.12)",
+const HEALTH_STATUS_META = {
+  idle: {
+    label: "Idle",
+    icon: "•",
+    tone: "rgba(148,163,184,0.20)",
+    textColor: "#475569",
+  },
+  checking: {
+    label: "In progress",
+    icon: "⏳",
+    tone: "rgba(59,130,246,0.14)",
+    textColor: "#1d4ed8",
+  },
+  online: {
+    label: "✅ Online",
+    icon: "✅",
+    tone: "rgba(34,197,94,0.12)",
+    textColor: "#166534",
+  },
+  offline: {
+    label: "❌ Offline",
+    icon: "❌",
+    tone: "rgba(239,68,68,0.12)",
+    textColor: "#991b1b",
+  },
 };
 
 const normalizeBase = (value) => {
@@ -49,15 +75,20 @@ async function fetchJson(base, path) {
   return data;
 }
 
-function HealthBadge({ ok }) {
+function HealthBadge({ status, latencyMs }) {
+  const meta = HEALTH_STATUS_META[status] || HEALTH_STATUS_META.idle;
   return (
     <span
       style={{
         ...HEALTH_BADGE_STYLE,
-        background: ok ? HEALTH_STATUS_COLORS.online : HEALTH_STATUS_COLORS.offline,
+        background: meta.tone,
+        color: meta.textColor,
       }}
     >
-      {ok ? "✅ Online" : "❌ Offline"}
+      {meta.label}
+      {status === "online" && latencyMs !== null && (
+        <span style={{ opacity: 0.75 }}>• {latencyMs} ms</span>
+      )}
     </span>
   );
 }
@@ -65,13 +96,14 @@ function HealthBadge({ ok }) {
 export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
   const cleanBase = useMemo(() => normalizeBase(apiBase), [apiBase]);
   const [loading, setLoading] = useState(false);
-  const [ok, setOk] = useState(null); // null = not checked yet
+  const [status, setStatus] = useState("idle");
   const [latencyMs, setLatencyMs] = useState(null);
   const [checkedAt, setCheckedAt] = useState(null);
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
 
   async function runCheck() {
+    setStatus("checking");
     setLoading(true);
     setError("");
     setData(null);
@@ -83,13 +115,13 @@ export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
       const t1 = performance.now();
       setLatencyMs(Math.round(t1 - t0));
       setCheckedAt(new Date());
-      setOk(true);
+      setStatus("online");
       setData(resp);
     } catch (e) {
       const t1 = performance.now();
       setLatencyMs(Math.round(t1 - t0));
       setCheckedAt(new Date());
-      setOk(false);
+      setStatus("offline");
       setError(String(e.message || e));
     } finally {
       setLoading(false);
@@ -99,32 +131,49 @@ export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
   return (
     <div className="card">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <h2 className="card-title" style={{ margin: 0 }}>Server Health</h2>
-        {ok !== null && <HealthBadge ok={ok} />}
+        <div>
+          <p className="card-eyebrow" style={{ marginBottom: 2 }}>Live observability</p>
+          <h2 className="card-title" style={{ margin: 0 }}>Server Health</h2>
+        </div>
+        <HealthBadge status={status} latencyMs={latencyMs} />
       </div>
 
-      <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+      <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <button className="btn" onClick={runCheck} disabled={loading}>
             {loading ? "Checking..." : "Check backend status"}
+          </button>
+          <button className="btn btn-ghost" onClick={runCheck} disabled={loading}>
+            Retry
           </button>
 
           <span style={{ opacity: 0.75, fontSize: 13 }}>
             API: <code>{cleanBase}</code>
           </span>
-
-          {latencyMs !== null && (
-            <span style={{ opacity: 0.75, fontSize: 13 }}>
-              Latency: <b>{latencyMs}ms</b>
-            </span>
-          )}
-
-          {checkedAt && (
-            <span style={{ opacity: 0.75, fontSize: 13 }}>
-              Last checked: <b>{checkedAt.toLocaleString()}</b>
-            </span>
-          )}
         </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 10,
+            alignItems: "flex-start",
+          }}
+        >
+          <InfoCell label="Latency:" value={latencyMs !== null ? `${latencyMs} ms` : "—"} emphasize={latencyMs !== null} />
+          <InfoCell label="Status" value={statusLabel(status)} />
+          <InfoCell label="Last checked" value={checkedAt ? checkedAt.toLocaleString() : "Not checked yet"} />
+          <InfoCell label="Base URL" value={<code>{cleanBase}</code>} />
+          <InfoCell
+            label="Last error"
+            value={error ? "See details below" : "None"}
+            muted={!error}
+          />
+        </div>
+
+        {status === "checking" && (
+          <p className="path" style={{ margin: 0 }}>Calling /hello and measuring round-trip...</p>
+        )}
 
         {error && (
           <div style={ERROR_BOX_STYLE}>
@@ -149,4 +198,36 @@ export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
       </div>
     </div>
   );
+}
+
+function InfoCell({ label, value, emphasize = false, muted = false }) {
+  return (
+    <div style={{ display: "grid", gap: 4 }}>
+      <span className="label" style={{ textTransform: "uppercase", letterSpacing: "0.04em", fontSize: 11 }}>
+        {label}
+      </span>
+      <span
+        style={{
+          fontWeight: emphasize ? 700 : 500,
+          color: muted ? "#94a3b8" : "#0f172a",
+          wordBreak: "break-word",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case "checking":
+      return "In progress";
+    case "online":
+      return "Online";
+    case "offline":
+      return "Offline";
+    default:
+      return "Idle";
+  }
 }
