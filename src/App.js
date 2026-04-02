@@ -255,9 +255,8 @@ export default function App() {
   }, [apiBase]);
 
   useEffect(() => {
-    loadCities();
-  
-  }, []);
+  loadCities();
+  }, [loadCities]);
 
   // Load state options from HATEOAS endpoint
   const { options: stateOptionsRaw } = 
