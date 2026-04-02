@@ -187,7 +187,7 @@ beforeEach(() => {
     expect(within(filteredList).getByText("York")).toBeInTheDocument();
 
     await userEvent.clear(screen.getByPlaceholderText("e.g. York"));
-    await userEvent.selectOptions(screen.getAllByRole("combobox")[1], "desc");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: /city sort/i }), "desc");
 
     await waitFor(() => {
       expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 10)");
