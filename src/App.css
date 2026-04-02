@@ -391,3 +391,31 @@
     width: 100%;
   }
 }
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.control-wide {
+  min-width: 160px;
+}
+
+.compare-btn {
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 6px 12px;
+  box-shadow: none;
+}
+
+.compare-btn.active {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.compare-btn.inactive {
+  background: #d1d5db;
+  color: #1f2937;
+}
