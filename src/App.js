@@ -258,12 +258,11 @@ export default function App() {
     loadStates();
   }, [loadStates]);
   
-  useEffect(() => {
-    loadCities();
+
   
-  }, []);
-  loadCities();
-  }, [loadCities]);
+  useEffect(() => {
+      loadCities();
+    }, [loadCities]);
 
   // Load state options from HATEOAS endpoint
   const { options: stateOptionsRaw } = 
