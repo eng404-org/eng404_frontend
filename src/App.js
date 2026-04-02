@@ -262,6 +262,8 @@ export default function App() {
     loadCities();
   
   }, []);
+  loadCities();
+  }, [loadCities]);
 
   // Load state options from HATEOAS endpoint
   const { options: stateOptionsRaw } = 
