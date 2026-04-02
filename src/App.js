@@ -256,7 +256,8 @@ export default function App() {
 
   useEffect(() => {
     loadCities();
-  }, [loadCities]);
+  
+  }, []);
 
   // Load state options from HATEOAS endpoint
   const { options: stateOptionsRaw } = 
@@ -465,8 +466,8 @@ export default function App() {
         >
           <div className="card-toolbar">
             <div className="endpoint-chip">GET /state/read</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <div className="control" style={{ minWidth: 160 }}>
+            <div className="toolbar-actions">
+              <div className="control control-wide">
                 <span className="label">Filter</span>
                 <input
                   className="input"
@@ -476,7 +477,7 @@ export default function App() {
                 />
               </div>
 
-              <div className="control" style={{ minWidth: 120 }}>
+              <div className="control control-mid">
                 <span className="label">Sort</span>
                 <select
                   className="input"
@@ -513,37 +514,19 @@ export default function App() {
                 )}
               </p>
 
-              <div
-                className="card-subsection"
-                style={{
-                  border: "1px solid var(--outline)",
-                  borderRadius: 14,
-                  padding: 10,
-                  background: "rgba(15,23,42,0.02)",
-                }}
-              >
+              <div className="card-subsection panel-soft">
+
                 {filteredStates.length === 0 ? (
                   <p className="path">No states match that search.</p>
                 ) : (
-                  <div
-                    style={{
-                      maxHeight: 260,
-                      overflowY: "auto",
-                      borderRadius: 10,
-                    }}
-                  >
+                  <div className="scroll-box">
                     <ul className="list" aria-label="state list" style={{ margin: 0 }}>
                       {filteredStates.map((state) => {
                         const isSelected = stateCode === state.code;
                         return (
                           <li
                             key={state.code || state.name}
-                            className="city-item"
-                            style={{
-                              cursor: "pointer",
-                              background: isSelected ? "rgba(14,165,233,0.12)" : "transparent",
-                              border: isSelected ? "1px solid rgba(14,165,233,0.35)" : "1px solid transparent",
-                            }}
+                            className={`city-item list-item-selectable ${isSelected ? "active" : ""}`}
                             onClick={() => {
                               if (state.code) setStateCode(state.code);
                               setSelectedMapState(state.code || null);
@@ -684,14 +667,8 @@ export default function App() {
 
                       <div style={{ marginTop: 8 }}>
                         <button
-                          className="btn"
+                          className={`btn compare-btn ${isSelected ? "active" : "inactive"}`}
                           onClick={() => toggleSelectCity(c)}
-                          style={{
-                            background: isSelected ? "#3b82f6" : "#d1d5db",
-                            color: isSelected ? "white" : "#1f2937",
-                            fontSize: 12,
-                            padding: "6px 12px",
-                          }}
                         >
                           {isSelected ? "✓ Compare" : "Compare"}
                           {selectedCities.length >= 3 && !isSelected && " (max 3)"}
