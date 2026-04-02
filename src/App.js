@@ -255,6 +255,13 @@ export default function App() {
   }, [apiBase]);
 
   useEffect(() => {
+    loadStates();
+  }, [loadStates]);
+  
+  useEffect(() => {
+    loadCities();
+  
+  }, []);
   loadCities();
   }, [loadCities]);
 
@@ -428,9 +435,10 @@ export default function App() {
           <GeoMap
             selectedState={selectedMapState}
             cities={mapCities}
+            states={statesResp?.States || []}
             onStateSelect={loadCitiesForMapState}
           />
-  
+    
           <div className="selected-state-panel">
             <div className="selected-state-title">
               {selectedMapState ? `Selected state: ${selectedMapState}` : "Selected state: none"}
