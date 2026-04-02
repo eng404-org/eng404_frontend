@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import App from "./App";
 
@@ -60,6 +60,27 @@ describe("App Component", () => {
         });
       }
 
+      if (url.includes("/state/read")) {
+        return Promise.resolve({
+          ok: true,
+          text: async () =>
+            JSON.stringify({
+              "Number of Records": 2,
+              States: [
+                { code: "NY", name: "New York" },
+                { code: "CA", name: "California" },
+              ],
+            }),
+          json: async () => ({
+            "Number of Records": 2,
+            States: [
+              { code: "NY", name: "New York" },
+              { code: "CA", name: "California" },
+            ],
+          }),
+        });
+      }
+
       return Promise.resolve({
         ok: true,
         text: async () => JSON.stringify({}),
@@ -97,13 +118,13 @@ describe("App Component", () => {
     const refreshButton = screen.getByRole("button", { name: /load states/i });
     fireEvent.click(refreshButton);
 
-   await waitFor(() => {
-  expect(screen.getByText(/Records available:/i)).toBeInTheDocument();
-  expect(screen.getAllByText(/New York/i)[0]).toBeInTheDocument();
-  expect(screen.getAllByText(/California/i)[0]).toBeInTheDocument();
-});
+    expect(await screen.findByText(/Total states:/i)).toBeInTheDocument();
+    const stateList = screen.getByRole("list", { name: /state list/i });
+    expect(within(stateList).getByText(/New York/i)).toBeInTheDocument();
+    expect(within(stateList).getByText(/California/i)).toBeInTheDocument();
 
     expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/state/options");
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/state/read");
   });
 
   test("clear button resets city filters to defaults", async () => {
@@ -112,13 +133,13 @@ describe("App Component", () => {
   await screen.findByText("New York");
 
   await waitFor(() => {
-    expect(screen.getAllByRole("combobox")[0].options.length).toBeGreaterThan(1);
+    expect(screen.getByRole("combobox", { name: /state_code/i }).options.length).toBeGreaterThan(1);
   });
 
-  const stateSelect = screen.getAllByRole("combobox")[0];
-  const limitInput = screen.getByDisplayValue("10");
-  const searchInput = screen.getByPlaceholderText("e.g. York");
-  const sortSelect = screen.getAllByRole("combobox")[1];
+  const stateSelect = screen.getByRole("combobox", { name: /state_code/i });
+  const limitInput = screen.getByLabelText(/limit/i);
+  const searchInput = screen.getByLabelText(/search/i);
+  const sortSelect = screen.getByRole("combobox", { name: /city sort/i });
 
   fireEvent.change(stateSelect, { target: { value: "CA" } });
   fireEvent.change(limitInput, { target: { value: "5" } });
@@ -134,7 +155,7 @@ describe("App Component", () => {
 
   expect(stateSelect).toHaveValue("NY");
   expect(screen.getByDisplayValue("10")).toBeInTheDocument();
-  expect(screen.getByPlaceholderText("e.g. York")).toHaveValue("");
+  expect(screen.getByLabelText(/search/i)).toHaveValue("");
   expect(sortSelect).toHaveValue("asc");
   });
 });

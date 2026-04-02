@@ -532,7 +532,7 @@ export default function App() {
                       borderRadius: 10,
                     }}
                   >
-                    <ul className="list" style={{ margin: 0 }}>
+                    <ul className="list" aria-label="state list" style={{ margin: 0 }}>
                       {filteredStates.map((state) => {
                         const isSelected = stateCode === state.code;
                         return (
@@ -617,6 +617,7 @@ export default function App() {
               <span className="label">sort</span>
               <select
                 className="input"
+                aria-label="city sort"
                 value={sortDir}
                 onChange={(e) => setSortDir(e.target.value)}
               >
