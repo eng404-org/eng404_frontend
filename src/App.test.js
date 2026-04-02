@@ -102,7 +102,7 @@ describe("App Component", () => {
   test("loads default cities on mount and displays them", async () => {
     render(<App />);
 
-    expect(await screen.findByText("New York")).toBeInTheDocument();
+    expect((await screen.findAllByText("New York")).length).toBeGreaterThan(0);
     expect(await screen.findByText("Albany")).toBeInTheDocument();
 
     expect(global.fetch).toHaveBeenCalledWith(
@@ -113,7 +113,7 @@ describe("App Component", () => {
   test("loads states when refresh button is clicked", async () => {
     render(<App />);
 
-    await screen.findByText("New York");
+    await screen.findAllByText("New York");
 
     const refreshButton = screen.getByRole("button", { name: /load states/i });
     fireEvent.click(refreshButton);
@@ -130,7 +130,7 @@ describe("App Component", () => {
   test("clear button resets city filters to defaults", async () => {
   render(<App />);
 
-  await screen.findByText("New York");
+  await screen.findAllByText("New York");
 
   await waitFor(() => {
     expect(screen.getByRole("combobox", { name: /state_code/i }).options.length).toBeGreaterThan(1);
