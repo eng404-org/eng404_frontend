@@ -126,8 +126,9 @@ export default function App() {
   const [loadingMapCities, setLoadingMapCities] = useState(false);
   const [mapCitiesErr, setMapCitiesErr] = useState(null);
 
-  // eslint-disable-next-line no-unused-vars
   const [loadingStates, setLoadingStates] = useState(false);
+  const [stateSearch, setStateSearch] = useState("");
+  const [stateSortDir, setStateSortDir] = useState("asc");
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [globalError, setGlobalError] = useState(null);
@@ -301,6 +302,36 @@ export default function App() {
     [sortedCities, visibleCount]
   );
 
+  const stateList = useMemo(() => {
+    const raw = statesResp?.States || statesResp?.states || statesResp;
+    if (!raw || typeof raw !== "object") return [];
+    if (Array.isArray(raw)) {
+      return raw.map((s) => ({
+        code: s.code || s.state_code || s.abbr || s["state_code"],
+        name: s.name || s.state || s["State"],
+      })).filter((s) => s.code || s.name);
+    }
+
+    return Object.entries(raw).map(([code, name]) => ({ code, name }));
+  }, [statesResp]);
+
+  const filteredStates = useMemo(() => {
+    const q = stateSearch.trim().toLowerCase();
+    const list = [...stateList];
+    list.sort((a, b) => {
+      const aName = String(a.name || a.code || "");
+      const bName = String(b.name || b.code || "");
+      return stateSortDir === "desc"
+        ? bName.localeCompare(aName)
+        : aName.localeCompare(bName);
+    });
+    if (!q) return list;
+    return list.filter((s) =>
+      String(s.name || "").toLowerCase().includes(q) ||
+      String(s.code || "").toLowerCase().includes(q)
+    );
+  }, [stateList, stateSearch, stateSortDir]);
+
   return (
     <div className="app-shell">
       {globalError && (
@@ -434,29 +465,102 @@ export default function App() {
         >
           <div className="card-toolbar">
             <div className="endpoint-chip">GET /state/read</div>
-            <button className="btn" onClick={loadStates} disabled={loadingStates}>
-              {loadingStates ? "Loading..." : "Load states"}
-            </button>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <div className="control" style={{ minWidth: 160 }}>
+                <span className="label">Filter</span>
+                <input
+                  className="input"
+                  value={stateSearch}
+                  onChange={(e) => setStateSearch(e.target.value)}
+                  placeholder="Search name or code"
+                />
+              </div>
+
+              <div className="control" style={{ minWidth: 120 }}>
+                <span className="label">Sort</span>
+                <select
+                  className="input"
+                  value={stateSortDir}
+                  onChange={(e) => setStateSortDir(e.target.value)}
+                >
+                  <option value="asc">A → Z</option>
+                  <option value="desc">Z → A</option>
+                </select>
+              </div>
+
+              <button className="btn" onClick={loadStates} disabled={loadingStates}>
+                {loadingStates ? "Loading..." : "Load states"}
+              </button>
+            </div>
           </div>
-  
+
           {statesErr && <p className="path error-text">{statesErr}</p>}
-  
+
           {loadingStates && <p className="path">Contacting backend...</p>}
-  
+
+          {!loadingStates && !statesResp && !statesErr && (
+            <p className="path">No states loaded yet. Press “Load states” to pull the catalog.</p>
+          )}
+
           {statesResp && (
             <>
-              <p className="meta">Records available: <b>{statesResp["Number of Records"]}</b></p>
-  
-              <div className="card-subsection">
-                <p className="muted">Preview (first 10 to keep things tidy)</p>
-                <JsonBox
-                  value={{
-                    "States Preview":
-                      Array.isArray(statesResp["States"])
-                        ? statesResp["States"].slice(0, 10)
-                        : Object.fromEntries(Object.entries(statesResp["States"] || {}).slice(0, 10)),
-                  }}
-                />
+              <p className="meta">
+                Total states: <b>{stateList.length || statesResp["Number of Records"] || 0}</b>
+                {stateSearch.trim() && (
+                  <span style={{ marginLeft: 8, color: "var(--ink-500)" }}>
+                    ({filteredStates.length} match{filteredStates.length === 1 ? "" : "es"})
+                  </span>
+                )}
+              </p>
+
+              <div
+                className="card-subsection"
+                style={{
+                  border: "1px solid var(--outline)",
+                  borderRadius: 14,
+                  padding: 10,
+                  background: "rgba(15,23,42,0.02)",
+                }}
+              >
+                {filteredStates.length === 0 ? (
+                  <p className="path">No states match that search.</p>
+                ) : (
+                  <div
+                    style={{
+                      maxHeight: 260,
+                      overflowY: "auto",
+                      borderRadius: 10,
+                    }}
+                  >
+                    <ul className="list" style={{ margin: 0 }}>
+                      {filteredStates.map((state) => {
+                        const isSelected = stateCode === state.code;
+                        return (
+                          <li
+                            key={state.code || state.name}
+                            className="city-item"
+                            style={{
+                              cursor: "pointer",
+                              background: isSelected ? "rgba(14,165,233,0.12)" : "transparent",
+                              border: isSelected ? "1px solid rgba(14,165,233,0.35)" : "1px solid transparent",
+                            }}
+                            onClick={() => {
+                              if (state.code) setStateCode(state.code);
+                              setSelectedMapState(state.code || null);
+                            }}
+                          >
+                            <div className="city-name">
+                              {state.name || state.code}
+                            </div>
+                            <div className="city-meta">
+                              {state.code || "—"}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
               </div>
             </>
           )}
