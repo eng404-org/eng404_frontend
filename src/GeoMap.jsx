@@ -126,7 +126,7 @@ export default function GeoMap({ selectedState, cities = [], states = [], onStat
         Auto-loads top NY cities and groups nearby markers.
       </p>
 
-      <div style={{ height: 420, borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ height: 600, borderRadius: 12, overflow: "hidden" }}>
         <MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
