@@ -93,7 +93,13 @@ test("loads and normalizes a saved API base from localStorage on mount", async (
 
   await waitFor(() => {
     expect(fetch).toHaveBeenCalledWith("http://api.example.com/cities?state_code=NY&limit=10");
+  });
+  
+  await waitFor(() => {
     expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/options");
+  });
+  
+  await waitFor(() => {
     expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/read");
   });
 
@@ -242,9 +248,8 @@ test("filters, sorts, and expands the city list returned from the cities endpoin
     expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 2 (showing 2)");
   });
 
-  const cityCard = screen.getByText(/City Search/i).closest(".card");
-  expect(within(cityCard).getByText("Yonkers")).toBeInTheDocument();
-  expect(within(cityCard).getByText("York")).toBeInTheDocument();
+  expect(screen.getByText("Yonkers")).toBeInTheDocument();
+  expect(screen.getByText("York")).toBeInTheDocument();
 
   await userEvent.clear(screen.getByPlaceholderText("e.g. York"));
   await userEvent.selectOptions(screen.getByRole("combobox", { name: /city sort/i }), "desc");
@@ -253,9 +258,13 @@ test("filters, sorts, and expands the city list returned from the cities endpoin
     expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 10)");
   });
 
-  const cityItems = within(cityCard).getAllByRole("listitem");
-  expect(within(cityItems[0]).getByText("York")).toBeInTheDocument();
+  const cityItems = screen
+  .getAllByRole("listitem")
+  .filter((item) =>
+    within(item).queryByRole("button", { name: /compare/i })
+  );
 
+  expect(within(cityItems[0]).getByText("York")).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: /load more/i }));
 
   await waitFor(() => {
