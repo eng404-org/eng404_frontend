@@ -92,15 +92,22 @@ describe("App Component", () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
-
-  test('renders dashboard heading', () => {
+ 
+  test("renders intro tab by default", () => {
     render(<App />);
-    const heading = screen.getByText(/API observability at a glance/i);
-    expect(heading).toBeInTheDocument();
+    expect(
+      screen.getByText(/Welcome to the ENG404 geography dashboard/i)
+    ).toBeInTheDocument();
   });
+
+  async function openExplorerTab() {
+    const explorerTab = screen.getByRole("button", { name: /^Explorer$/i });
+    fireEvent.click(explorerTab);
+  }
 
   test("loads default cities on mount and displays them", async () => {
     render(<App />);
+    await openExplorerTab();
 
     expect((await screen.findAllByText("New York")).length).toBeGreaterThan(0);
     expect(await screen.findByText("Albany")).toBeInTheDocument();
@@ -112,6 +119,7 @@ describe("App Component", () => {
 
   test("loads states when refresh button is clicked", async () => {
     render(<App />);
+    await openExplorerTab();
 
     await screen.findAllByText("New York");
 
@@ -129,6 +137,7 @@ describe("App Component", () => {
 
   test("clear button resets city filters to defaults", async () => {
   render(<App />);
+  await openExplorerTab();
 
   await screen.findAllByText("New York");
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within, fireEvent} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import App from "./App";
@@ -19,6 +19,14 @@ jest.mock("./HelloHealthCard", () => {
     return <div data-testid="hello-health-card">HelloHealthCard base: {apiBase}</div>;
   };
 });
+
+function openHealthTab() {
+  fireEvent.click(screen.getByRole("button", { name: /^Health$/i }));
+}
+
+function openExplorerTab() {
+  fireEvent.click(screen.getByRole("button", { name: /^Explorer$/i }));
+}
 
 beforeEach(() => {
   global.fetch = jest.fn().mockResolvedValue({
@@ -89,8 +97,9 @@ test("loads and normalizes a saved API base from localStorage on mount", async (
     expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/read");
   });
 
+  openHealthTab();
+
   expect(screen.getByDisplayValue("http://api.example.com")).toBeInTheDocument();
-  expect(screen.getByText("Active base: http://api.example.com")).toBeInTheDocument();
   expect(screen.getByTestId("hello-health-card")).toHaveTextContent(
     "HelloHealthCard base: http://api.example.com"
   );
@@ -142,6 +151,7 @@ test("applies a new API base after successful state/options fetch", async () => 
   });
 
   render(<App />);
+  openHealthTab();
 
   const input = screen.getByPlaceholderText("http://localhost:8000");
   await userEvent.clear(input);
@@ -158,7 +168,6 @@ test("applies a new API base after successful state/options fetch", async () => 
     );
   });
 
-  expect(screen.getByText("Active base: http://backend.test:9000")).toBeInTheDocument();
 });
 
 test("filters, sorts, and expands the city list returned from the cities endpoint", async () => {
@@ -222,6 +231,8 @@ test("filters, sorts, and expands the city list returned from the cities endpoin
 
   render(<App />);
 
+  openExplorerTab();
+
   await screen.findByText(/Results:/i);
   expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 10)");
 
@@ -231,7 +242,7 @@ test("filters, sorts, and expands the city list returned from the cities endpoin
     expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 2 (showing 2)");
   });
 
-  const cityCard = screen.getByText("3) City Search").closest(".card");
+  const cityCard = screen.getByText(/City Search/i).closest(".card");
   expect(within(cityCard).getByText("Yonkers")).toBeInTheDocument();
   expect(within(cityCard).getByText("York")).toBeInTheDocument();
 

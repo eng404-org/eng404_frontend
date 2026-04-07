@@ -16,10 +16,19 @@ jest.mock("./HelloHealthCard", () => {
   };
 });
 
+function openHealthTab() {
+  fireEvent.click(screen.getByRole("button", { name: /^Health$/i }));
+}
+
+function openExplorerTab() {
+  fireEvent.click(screen.getByRole("button", { name: /^Explorer$/i }));
+}
+
 describe("Extra tests for App", () => {
 
   test("renders API base input field", () => {
     render(<App />);
+    openHealthTab();
 
     const input = screen.getByPlaceholderText("http://localhost:8000");
     expect(input).toBeInTheDocument();
@@ -27,6 +36,7 @@ describe("Extra tests for App", () => {
 
   test("renders Apply & ping button", () => {
     render(<App />);
+    openHealthTab();
 
     const button = screen.getByText(/apply & ping/i);
     expect(button).toBeInTheDocument();
@@ -34,6 +44,7 @@ describe("Extra tests for App", () => {
 
   test("renders Clear button in city controls", () => {
     render(<App />);
+    openExplorerTab();
 
     const clearButton = screen.getByText(/clear/i);
     expect(clearButton).toBeInTheDocument();
