@@ -23,6 +23,12 @@
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx"
   },
+  "overrides": {
+    "typescript": "4.9.5",
+    "fork-ts-checker-webpack-plugin": {
+      "typescript": "4.9.5"
+    }
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
