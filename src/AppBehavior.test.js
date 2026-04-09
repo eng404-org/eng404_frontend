@@ -272,3 +272,142 @@ test("filters, sorts, and expands the city list returned from the cities endpoin
     expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 12)");
   });
 });
+
+test("clicking a city shows details panel and raw JSON toggle", async () => {
+  const cities = [
+    { name: "Albany", state_code: "NY", population: 100000, latitude: 42.6526, longitude: -73.7562, timezone: "EST" },
+    { name: "Boston", state_code: "MA", population: 600000 },
+  ];
+
+  fetch.mockImplementation((url) => {
+    const href = String(url);
+
+    if (href.includes("/cities")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () => JSON.stringify(cities),
+      });
+    }
+
+    if (href.includes("/state/read")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            "Number of Records": 2,
+            States: [
+              { name: "New York", code: "NY" },
+              { name: "Massachusetts", code: "MA" },
+            ],
+          }),
+      });
+    }
+
+    if (href.includes("/state/options")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            options: [
+              { code: "NY", name: "New York" },
+              { code: "MA", name: "Massachusetts" },
+            ],
+          }),
+      });
+    }
+
+    return Promise.resolve({
+      ok: true,
+      text: async () => JSON.stringify({}),
+    });
+  });
+
+  render(<App />);
+  openExplorerTab();
+
+  const albanyRow = await screen.findByText("Albany");
+  fireEvent.click(albanyRow);
+
+  expect(await screen.findByText(/City Details/i)).toBeInTheDocument();
+  expect(screen.getByText(/Population/i).closest(".detail-row")).toHaveTextContent("100000");
+  expect(screen.getByText(/Latitude/i).closest(".detail-row")).toHaveTextContent("42.6526");
+  expect(screen.getByText(/timezone/i)).toBeInTheDocument();
+
+  const selectedRow = albanyRow.closest("li");
+  expect(selectedRow).toHaveClass("active");
+
+  const toggle = screen.getByRole("button", { name: /show raw json/i });
+  fireEvent.click(toggle);
+  expect(screen.getByText(/\"Albany\"/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /hide raw json/i }));
+  expect(screen.queryByText(/\"Albany\"/)).not.toBeInTheDocument();
+});
+
+test("details panel clears when selected city is filtered out", async () => {
+  const cities = [
+    { name: "Albany", state_code: "NY", population: 100000 },
+    { name: "Boston", state_code: "MA", population: 600000 },
+  ];
+
+  fetch.mockImplementation((url) => {
+    const href = String(url);
+
+    if (href.includes("/cities")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () => JSON.stringify(cities),
+      });
+    }
+
+    if (href.includes("/state/read")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            "Number of Records": 2,
+            States: [
+              { name: "New York", code: "NY" },
+              { name: "Massachusetts", code: "MA" },
+            ],
+          }),
+      });
+    }
+
+    if (href.includes("/state/options")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            options: [
+              { code: "NY", name: "New York" },
+              { code: "MA", name: "Massachusetts" },
+            ],
+          }),
+      });
+    }
+
+    return Promise.resolve({
+      ok: true,
+      text: async () => JSON.stringify({}),
+    });
+  });
+
+  render(<App />);
+  openExplorerTab();
+
+  const albanyRow = await screen.findByText("Albany");
+  fireEvent.click(albanyRow);
+  expect(screen.getByText(/City Details/i)).toBeInTheDocument();
+  expect(screen.getByText("Albany · NY")).toBeInTheDocument();
+
+  const searchInput = screen.getByLabelText(/search/i);
+  await userEvent.clear(searchInput);
+  await userEvent.type(searchInput, "zzz");
+
+  await waitFor(() => {
+    expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 0");
+  });
+
+  expect(screen.getByText(/Select a city to inspect details/i)).toBeInTheDocument();
+  expect(screen.queryByText("Albany · NY")).not.toBeInTheDocument();
+});

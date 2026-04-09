@@ -79,6 +79,16 @@ function JsonBox({ value }) {
   );
 }
 
+function DetailRow({ label, value }) {
+  const display = value === null || value === undefined || value === "" ? "—" : value;
+  return (
+    <div className="detail-row">
+      <span className="detail-label">{label}</span>
+      <span className="detail-value">{String(display)}</span>
+    </div>
+  );
+}
+
 function IntroFeatureCard({ title, text }) {
   return (
     <div className="intro-feature-card">
@@ -92,6 +102,8 @@ export default function App() {
   const [lastTouched, setLastTouched] = useState({ states: null, cities: null });
 
   const [selectedCities, setSelectedCities] = useState([]);
+  const [selectedCityDetail, setSelectedCityDetail] = useState(null);
+  const [showRawCityJson, setShowRawCityJson] = useState(false);
 
   const [activeTab, setActiveTab] = useState("intro");
 
@@ -280,13 +292,15 @@ export default function App() {
   
       setCities(data);
       setMapCities(results);
-  
+
       const code = stateCode.trim().toUpperCase();
       if (code) {
         setSelectedMapState(code);
       }
-  
+
       setVisibleCount(10);
+      setSelectedCityDetail(null);
+      setShowRawCityJson(false);
       setLastTouched((prev) => ({ ...prev, cities: new Date() }));
     } catch (e) {
       setCitiesErr(e.message);
@@ -314,9 +328,11 @@ export default function App() {
       setMapCities(results);
       setCities(results);
       setVisibleCount(10);
+      setSelectedCityDetail(null);
+      setShowRawCityJson(false);
       setLimit("20");
       setCityQuery("");
-  
+
       setLastTouched((prev) => ({ ...prev, cities: new Date() }));
     } catch (e) {
       setMapCities([]);
@@ -363,6 +379,17 @@ export default function App() {
       q ? String(c.name || "").toLowerCase().includes(q) : true
     );
   }, [citiesArray, cityQuery]);
+
+  useEffect(() => {
+    if (!selectedCityDetail) return;
+    const stillVisible = filteredCities.some(
+      (c) => c.name === selectedCityDetail.name && c.state_code === selectedCityDetail.state_code
+    );
+    if (!stillVisible) {
+      setSelectedCityDetail(null);
+      setShowRawCityJson(false);
+    }
+  }, [filteredCities, selectedCityDetail]);
 
   const sortedCities = useMemo(() => {
     const arr = [...filteredCities];
@@ -767,6 +794,8 @@ export default function App() {
                       setCityQuery("");
                       setSortDir("asc");
                       setVisibleCount(10);
+                      setSelectedCityDetail(null);
+                      setShowRawCityJson(false);
                     }}
                   >
                     Clear
@@ -787,17 +816,28 @@ export default function App() {
                   <p className="meta">
                     Results: <b>{filteredCities.length}</b> (showing {visibleCities.length})
                   </p>
-  
+
                   <ul className="list">
                     {visibleCities.map((c, idx) => {
                       const links = Array.isArray(c.links) ? c.links : [];
                       const isSelected = selectedCities.some((sc) => sc.name === c.name);
-  
+                      const isDetailSelected =
+                        selectedCityDetail &&
+                        selectedCityDetail.name === c.name &&
+                        selectedCityDetail.state_code === c.state_code;
+
                       return (
-                        <li key={idx} className="city-item">
+                        <li
+                          key={idx}
+                          className={`city-item list-item-selectable ${isDetailSelected ? "active" : ""}`}
+                          onClick={() => {
+                            setSelectedCityDetail(c);
+                            setShowRawCityJson(false);
+                          }}
+                        >
                           <div className="city-name">{c.name}</div>
                           <div className="city-meta">{c.state_code}</div>
-  
+
                           {links.length > 0 && (
                             <div className="city-links">
                               {links.map((l, i) => (
@@ -811,7 +851,10 @@ export default function App() {
                           <div style={{ marginTop: 8 }}>
                             <button
                               className={`btn compare-btn ${isSelected ? "active" : "inactive"}`}
-                              onClick={() => toggleSelectCity(c)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelectCity(c);
+                              }}
                             >
                               {isSelected ? "✓ Compare" : "Compare"}
                               {selectedCities.length >= 3 && !isSelected && " (max 3)"}
@@ -834,6 +877,53 @@ export default function App() {
               )}
   
               {cities && !Array.isArray(cities) && <JsonBox value={cities} />}
+            </Card>
+
+            <Card
+              title="City Details"
+              subtitle="Inspect a single city record"
+              meta={
+                selectedCityDetail
+                  ? `${selectedCityDetail.name || "City"} · ${selectedCityDetail.state_code || "—"}`
+                  : "No city selected"
+              }
+            >
+              {!selectedCityDetail && (
+                <p className="path">Select a city to inspect details.</p>
+              )}
+
+              {selectedCityDetail && (
+                <div className="city-detail-panel">
+                  <div className="detail-grid">
+                    <DetailRow label="Name" value={selectedCityDetail.name} />
+                    <DetailRow label="State" value={selectedCityDetail.state_code} />
+                    <DetailRow label="Population" value={selectedCityDetail.population} />
+                    <DetailRow label="Latitude" value={selectedCityDetail.latitude} />
+                    <DetailRow label="Longitude" value={selectedCityDetail.longitude} />
+                  </div>
+
+                  <div className="detail-grid detail-grid-extra">
+                    {Object.entries(selectedCityDetail)
+                      .filter(([key]) =>
+                        !["name", "state_code", "population", "latitude", "longitude", "links"].includes(key)
+                      )
+                      .map(([key, value]) => (
+                        <DetailRow key={key} label={key} value={value} />
+                      ))}
+                  </div>
+
+                  <div className="detail-actions">
+                    <button
+                      className="btn btn-ghost"
+                      onClick={() => setShowRawCityJson((v) => !v)}
+                    >
+                      {showRawCityJson ? "Hide raw JSON" : "Show raw JSON"}
+                    </button>
+                  </div>
+
+                  {showRawCityJson && <JsonBox value={selectedCityDetail} />}
+                </div>
+              )}
             </Card>
           </div>
   
