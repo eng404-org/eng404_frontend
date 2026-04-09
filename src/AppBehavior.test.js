@@ -37,6 +37,7 @@ beforeEach(() => {
   });
 
   localStorage.clear();
+  window.location.hash = "";
 });
 
 afterEach(() => {

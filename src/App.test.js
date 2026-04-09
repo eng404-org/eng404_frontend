@@ -24,6 +24,7 @@ describe("App Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+    window.location.hash = "";
 
     global.fetch = jest.fn((url) => {
       if (url.includes("/cities")) {
@@ -98,6 +99,36 @@ describe("App Component", () => {
     expect(
       screen.getByText(/Welcome to the ENG404 geography dashboard/i)
     ).toBeInTheDocument();
+    expect(window.location.hash).toBe("#intro");
+  });
+
+  test("loads health tab when hash is set on first load", async () => {
+    window.location.hash = "#health";
+    render(<App />);
+
+    expect(await screen.findByText(/Server health and API base/i)).toBeInTheDocument();
+    expect(window.location.hash).toBe("#health");
+  });
+
+  test("clicking Explorer updates the URL hash", async () => {
+    render(<App />);
+    const explorerTab = screen.getByRole("button", { name: /^Explorer$/i });
+    fireEvent.click(explorerTab);
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe("#explorer");
+    });
+  });
+
+  test("restores last tab from localStorage when no hash exists", async () => {
+    localStorage.setItem("eng404_active_tab", "explorer");
+    render(<App />);
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe("#explorer");
+    });
+
+    expect(await screen.findByText(/State Catalog/i)).toBeInTheDocument();
   });
 
   async function openExplorerTab() {

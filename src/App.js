@@ -15,6 +15,14 @@ const STORAGE_KEY = "eng404_api_base";
 
 const DEFAULT_STATE_CODE = "NY";
 const DEFAULT_LIMIT = "10";
+const TAB_STORAGE_KEY = "eng404_active_tab";
+
+const VALID_TABS = ["intro", "health", "explorer"];
+
+const getTabFromHash = (hash) => {
+  const value = String(hash || "").replace(/^#/, "").toLowerCase();
+  return VALID_TABS.includes(value) ? value : null;
+};
 
 // Error messages
 const ERROR_MESSAGES = {
@@ -86,6 +94,60 @@ export default function App() {
   const [selectedCities, setSelectedCities] = useState([]);
 
   const [activeTab, setActiveTab] = useState("intro");
+
+  // On mount: set tab from hash first, then localStorage, else intro
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hashTab = getTabFromHash(window.location.hash);
+    if (hashTab) {
+      setActiveTab(hashTab);
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem(TAB_STORAGE_KEY);
+      if (VALID_TABS.includes(stored)) {
+        setActiveTab(stored);
+        return;
+      }
+    } catch {
+      // ignore storage errors
+    }
+
+    setActiveTab("intro");
+  }, []);
+
+  // Sync active tab to hash + localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, activeTab);
+    } catch {
+      // ignore storage errors
+    }
+
+    if (typeof window !== "undefined") {
+      const desired = `#${activeTab}`;
+      if (window.location.hash !== desired) {
+        window.location.hash = desired;
+      }
+    }
+  }, [activeTab]);
+
+  // Listen for back/forward hash changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleHashChange = () => {
+      const tabFromHash = getTabFromHash(window.location.hash);
+      if (tabFromHash) {
+        setActiveTab((prev) => (prev === tabFromHash ? prev : tabFromHash));
+      } else {
+        setActiveTab("intro");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   const toggleSelectCity = useCallback((city) => {
     setSelectedCities((prev) => {
