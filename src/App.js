@@ -632,95 +632,7 @@ export default function App() {
           </div>
   
           <div className="explorer-bottom-grid">
-            <Card
-              title="State Catalog"
-              subtitle="Browse all available states from the backend"
-              meta={formatTimestamp(lastTouched.states)}
-            >
-              <div className="card-toolbar">
-                <div className="endpoint-chip">GET /state/read</div>
-                <div className="toolbar-actions">
-                  <div className="control control-wide">
-                    <span className="label">Filter</span>
-                    <input
-                      className="input"
-                      value={stateSearch}
-                      onChange={(e) => setStateSearch(e.target.value)}
-                      placeholder="Search name or code"
-                    />
-                  </div>
-  
-                  <div className="control control-mid">
-                    <span className="label">Sort</span>
-                    <select
-                      className="input"
-                      value={stateSortDir}
-                      onChange={(e) => setStateSortDir(e.target.value)}
-                    >
-                      <option value="asc">A → Z</option>
-                      <option value="desc">Z → A</option>
-                    </select>
-                  </div>
-  
-                  <button className="btn" onClick={loadStates} disabled={loadingStates}>
-                    {loadingStates ? "Loading..." : "Load states"}
-                  </button>
-                </div>
-              </div>
-  
-              {statesErr && <p className="path error-text">{statesErr}</p>}
-              {loadingStates && <p className="path">Contacting backend...</p>}
-  
-              {!loadingStates && !statesResp && !statesErr && (
-                <p className="path">No states loaded yet. Press “Load states” to pull the catalog.</p>
-              )}
-  
-              {statesResp && (
-                <>
-                  <p className="meta">
-                    Total states: <b>{stateList.length || statesResp["Number of Records"] || 0}</b>
-                    {stateSearch.trim() && (
-                      <span style={{ marginLeft: 8, color: "var(--ink-500)" }}>
-                        ({filteredStates.length} match{filteredStates.length === 1 ? "" : "es"})
-                      </span>
-                    )}
-                  </p>
-  
-                  <div className="card-subsection panel-soft">
-                    {filteredStates.length === 0 ? (
-                      <p className="path">No states match that search.</p>
-                    ) : (
-                      <div className="scroll-box">
-                        <ul className="list" aria-label="state list" style={{ margin: 0 }}>
-                          {filteredStates.map((state) => {
-                            const isSelected = stateCode === state.code;
-                            return (
-                              <li
-                                key={state.code || state.name}
-                                className={`city-item list-item-selectable ${isSelected ? "active" : ""}`}
-                                onClick={() => {
-                                  if (state.code) setStateCode(state.code);
-                                  setSelectedMapState(state.code || null);
-                                }}
-                              >
-                                <div className="city-name">
-                                  {state.name || state.code}
-                                </div>
-                                <div className="city-meta">
-                                  {state.code || "—"}
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </Card>
-  
-            <Card
+          <Card
               title="City Search"
               subtitle="Find cities by state, limit, and search term"
               meta={formatTimestamp(lastTouched.cities)}
@@ -804,7 +716,7 @@ export default function App() {
               </div>
   
               <div className="path-row">
-                <span className="endpoint-chip muted">Path: {citiesPath}</span>
+                {/* <span className="endpoint-chip muted">Path: {citiesPath}</span> */}
                 <span className="muted">Auto-loads on mount with NY & limit 10.</span>
               </div>
   
@@ -898,8 +810,8 @@ export default function App() {
                     <DetailRow label="Name" value={selectedCityDetail.name} />
                     <DetailRow label="State" value={selectedCityDetail.state_code} />
                     <DetailRow label="Population" value={selectedCityDetail.population} />
-                    <DetailRow label="Latitude" value={selectedCityDetail.latitude} />
-                    <DetailRow label="Longitude" value={selectedCityDetail.longitude} />
+                    {/* <DetailRow label="Latitude" value={selectedCityDetail.latitude} />
+                    <DetailRow label="Longitude" value={selectedCityDetail.longitude} /> */}
                   </div>
 
                   <div className="detail-grid detail-grid-extra">
@@ -925,13 +837,117 @@ export default function App() {
                 </div>
               )}
             </Card>
-          </div>
-  
-          {selectedCities.length > 0 && (
+
             <div className="compare-section">
-              <CityComparison cities={selectedCities} onRemoveCity={removeSelectedCity} />
-            </div>
-          )}
+            <Card
+              title="City Comparison"
+              subtitle="Compare selected cities"
+              meta={`${selectedCities.length} ${selectedCities.length === 1 ? "city" : "cities"} selected`}
+            >
+              {selectedCities.length > 0 ? (
+                <CityComparison
+                  cities={selectedCities}
+                  onRemoveCity={removeSelectedCity}
+                />
+              ) : (
+                <div className="compare-empty">
+                  <p className="path">Select up to 3 cities to compare.</p>
+                </div>
+              )}
+            </Card>
+          </div>
+          </div>
+
+            <Card
+              title="State Catalog"
+              subtitle="Browse all available states from the backend"
+              meta={formatTimestamp(lastTouched.states)}
+            >
+              <div className="card-toolbar">
+                {/* <div className="endpoint-chip">GET /state/read</div> */}
+                <div className="toolbar-actions">
+                  <div className="control control-wide">
+                    <span className="label">Filter</span>
+                    <input
+                      className="input"
+                      value={stateSearch}
+                      onChange={(e) => setStateSearch(e.target.value)}
+                      placeholder="Search name or code"
+                    />
+                  </div>
+  
+                  <div className="control control-mid">
+                    <span className="label">Sort</span>
+                    <select
+                      className="input"
+                      value={stateSortDir}
+                      onChange={(e) => setStateSortDir(e.target.value)}
+                    >
+                      <option value="asc">A → Z</option>
+                      <option value="desc">Z → A</option>
+                    </select>
+                  </div>
+  
+                  <button className="btn" onClick={loadStates} disabled={loadingStates}>
+                    {loadingStates ? "Loading..." : "Load states"}
+                  </button>
+                </div>
+              </div>
+  
+              {statesErr && <p className="path error-text">{statesErr}</p>}
+              {loadingStates && <p className="path">Contacting backend...</p>}
+  
+              {!loadingStates && !statesResp && !statesErr && (
+                <p className="path">No states loaded yet. Press “Load states” to pull the catalog.</p>
+              )}
+  
+              {statesResp && (
+                <>
+                  <p className="meta">
+                    Total states: <b>{stateList.length || statesResp["Number of Records"] || 0}</b>
+                    {stateSearch.trim() && (
+                      <span style={{ marginLeft: 8, color: "var(--ink-500)" }}>
+                        ({filteredStates.length} match{filteredStates.length === 1 ? "" : "es"})
+                      </span>
+                    )}
+                  </p>
+  
+                  <div className="card-subsection panel-soft">
+                    {filteredStates.length === 0 ? (
+                      <p className="path">No states match that search.</p>
+                    ) : (
+                      <div className="scroll-box">
+                        <ul className="list" aria-label="state list" style={{ margin: 0 }}>
+                          {filteredStates.map((state) => {
+                            const isSelected = stateCode === state.code;
+                            return (
+                              <li
+                                key={state.code || state.name}
+                                className={`city-item list-item-selectable ${isSelected ? "active" : ""}`}
+                                onClick={() => {
+                                  if (state.code) setStateCode(state.code);
+                                  setSelectedMapState(state.code || null);
+                                }}
+                              >
+                                <div className="city-name">
+                                  {state.name || state.code}
+                                </div>
+                                <div className="city-meta">
+                                  {state.code || "—"}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </Card>
+  
+            
+  
         </section>
       )}
     </div>

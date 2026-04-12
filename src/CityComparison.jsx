@@ -30,7 +30,7 @@ export default function CityComparison({ cities, onRemoveCity }) {
           City Comparison
         </h2>
         <span style={{ fontSize: 12, opacity: 0.6 }}>
-          {cities.length} city{cities.length !== 1 ? "ies" : ""} selected
+          {cities.length} {cities.length === 1 ? "city" : "cities"} selected
         </span>
       </div>
 
