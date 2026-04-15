@@ -794,47 +794,30 @@ export default function App() {
             <Card
               title="City Details"
               subtitle="Inspect a single city record"
-              meta={
-                selectedCityDetail
-                  ? `${selectedCityDetail.name || "City"} · ${selectedCityDetail.state_code || "—"}`
-                  : "No city selected"
-              }
+              meta={selectedCityDetail ? selectedCityDetail.name : "No city selected"}
             >
-              {!selectedCityDetail && (
-                <p className="path">Select a city to inspect details.</p>
-              )}
-
-              {selectedCityDetail && (
-                <div className="city-detail-panel">
-                  <div className="detail-grid">
+              {!selectedCityDetail ? (
+                <p className="muted">Select a city to inspect details.</p>
+              ) : (
+                <>
+                  <div className="details-grid">
                     <DetailRow label="Name" value={selectedCityDetail.name} />
                     <DetailRow label="State" value={selectedCityDetail.state_code} />
                     <DetailRow label="Population" value={selectedCityDetail.population} />
-                    {/* <DetailRow label="Latitude" value={selectedCityDetail.latitude} />
-                    <DetailRow label="Longitude" value={selectedCityDetail.longitude} /> */}
+                    <DetailRow label="Latitude" value={selectedCityDetail.latitude} />
+                    <DetailRow label="Longitude" value={selectedCityDetail.longitude} />
+                    <DetailRow label="Timezone" value={selectedCityDetail.timezone} />
                   </div>
 
-                  <div className="detail-grid detail-grid-extra">
-                    {Object.entries(selectedCityDetail)
-                      .filter(([key]) =>
-                        !["name", "state_code", "population", "latitude", "longitude", "links"].includes(key)
-                      )
-                      .map(([key, value]) => (
-                        <DetailRow key={key} label={key} value={value} />
-                      ))}
-                  </div>
-
-                  <div className="detail-actions">
-                    <button
-                      className="btn btn-ghost"
-                      onClick={() => setShowRawCityJson((v) => !v)}
-                    >
-                      {showRawCityJson ? "Hide raw JSON" : "Show raw JSON"}
-                    </button>
-                  </div>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setShowRawCityJson((prev) => !prev)}
+                  >
+                    {showRawCityJson ? "Hide raw JSON" : "Show raw JSON"}
+                  </button>
 
                   {showRawCityJson && <JsonBox value={selectedCityDetail} />}
-                </div>
+                </>
               )}
             </Card>
 
