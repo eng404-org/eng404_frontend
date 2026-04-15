@@ -398,7 +398,8 @@ test("details panel clears when selected city is filtered out", async () => {
   const albanyRow = await screen.findByText("Albany");
   fireEvent.click(albanyRow);
   expect(screen.getByText(/City Details/i)).toBeInTheDocument();
-  expect(screen.getByText("Albany · NY")).toBeInTheDocument();
+  expect(screen.getByText(/Name/i).closest(".detail-row")).toHaveTextContent("Albany");
+  expect(screen.getByText(/State/i).closest(".detail-row")).toHaveTextContent("NY");
 
   const searchInput = screen.getByLabelText(/search/i);
   await userEvent.clear(searchInput);
