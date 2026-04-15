@@ -632,7 +632,7 @@ export default function App() {
           </div>
   
           <div className="explorer-bottom-grid">
-          <Card
+            <Card
               title="City Search"
               subtitle="Find cities by state, limit, and search term"
               meta={formatTimestamp(lastTouched.cities)}
@@ -821,24 +821,24 @@ export default function App() {
               )}
             </Card>
 
-            <div className="compare-section">
             <Card
               title="City Comparison"
               subtitle="Compare selected cities"
               meta={`${selectedCities.length} ${selectedCities.length === 1 ? "city" : "cities"} selected`}
             >
               {selectedCities.length > 0 ? (
-                <CityComparison
-                  cities={selectedCities}
-                  onRemoveCity={removeSelectedCity}
-                />
+                <div className="compare-content">
+                  <CityComparison
+                    cities={selectedCities}
+                    onRemoveCity={removeSelectedCity}
+                  />
+                </div>
               ) : (
                 <div className="compare-empty">
                   <p className="path">Select up to 3 cities to compare.</p>
                 </div>
               )}
             </Card>
-          </div>
           </div>
 
             <Card
