@@ -397,9 +397,12 @@ test("details panel clears when selected city is filtered out", async () => {
 
   const albanyRow = await screen.findByText("Albany");
   fireEvent.click(albanyRow);
-  expect(screen.getByText(/City Details/i)).toBeInTheDocument();
-  expect(screen.getByText(/Name/i).closest(".detail-row")).toHaveTextContent("Albany");
-  expect(screen.getByText(/State/i).closest(".detail-row")).toHaveTextContent("NY");
+  expect(screen.getByText("City Details")).toBeInTheDocument();
+
+  const detailsCard = screen.getByText("City Details").closest(".card");
+  expect(detailsCard).toBeInTheDocument();
+  expect(within(detailsCard).getByText("Name").closest(".detail-row")).toHaveTextContent("Albany");
+  expect(within(detailsCard).getByText("State").closest(".detail-row")).toHaveTextContent("NY");
 
   const searchInput = screen.getByLabelText(/search/i);
   await userEvent.clear(searchInput);
@@ -409,6 +412,8 @@ test("details panel clears when selected city is filtered out", async () => {
     expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 0");
   });
 
-  expect(screen.getByText(/Select a city to inspect details/i)).toBeInTheDocument();
+  expect(within(detailsCard).getByText("Select a city to inspect details.")).toBeInTheDocument();
+  expect(within(detailsCard).queryByText("Albany")).not.toBeInTheDocument();
+  expect(within(detailsCard).queryByText("NY")).not.toBeInTheDocument();
   expect(screen.queryByText("Albany · NY")).not.toBeInTheDocument();
 });
