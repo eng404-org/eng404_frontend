@@ -93,16 +93,15 @@ test("loads and normalizes a saved API base from localStorage on mount", async (
   render(<App />);
 
   await waitFor(() => {
-    expect(fetch).toHaveBeenCalledWith("http://api.example.com/cities?state_code=NY&limit=10");
+    expect(fetch).toHaveBeenCalled();
   });
-  
-  await waitFor(() => {
-    expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/options");
-  });
-  
-  await waitFor(() => {
-    expect(fetch).toHaveBeenCalledWith("http://api.example.com/state/read");
-  });
+  expect(fetch.mock.calls.map((call) => call[0])).toEqual(
+    expect.arrayContaining([
+      "http://api.example.com/cities?state_code=NY&limit=10",
+      "http://api.example.com/state/options",
+      "http://api.example.com/state/read",
+    ])
+  );
 
   openHealthTab();
 
@@ -333,8 +332,7 @@ test("clicking a city shows details panel and raw JSON toggle", async () => {
   // expect(screen.getByText(/Latitude/i).closest(".detail-row")).toHaveTextContent("42.6526");
   expect(screen.getByText(/timezone/i)).toBeInTheDocument();
 
-  const selectedRow = albanyRow.closest("li");
-  expect(selectedRow).toHaveClass("active");
+  expect(screen.getByRole("button", { name: /^Details$/i })).toHaveClass("active");
 
   const toggle = screen.getByRole("button", { name: /show raw json/i });
   fireEvent.click(toggle);
@@ -397,6 +395,7 @@ test("details panel clears when selected city is filtered out", async () => {
 
   const albanyRow = await screen.findByText("Albany");
   fireEvent.click(albanyRow);
+
   expect(screen.getByText("City Details")).toBeInTheDocument();
 
   const detailsCard = screen.getByText("City Details").closest(".card");
@@ -404,7 +403,9 @@ test("details panel clears when selected city is filtered out", async () => {
   expect(within(detailsCard).getByText("Name").closest(".detail-row")).toHaveTextContent("Albany");
   expect(within(detailsCard).getByText("State").closest(".detail-row")).toHaveTextContent("NY");
 
-  const searchInput = screen.getByLabelText(/search/i);
+  fireEvent.click(screen.getByRole("button", { name: /^Explore$/i }));
+
+  const searchInput = screen.getByPlaceholderText("e.g. York");
   await userEvent.clear(searchInput);
   await userEvent.type(searchInput, "zzz");
 
@@ -412,8 +413,11 @@ test("details panel clears when selected city is filtered out", async () => {
     expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 0");
   });
 
-  expect(within(detailsCard).getByText("Select a city to inspect details.")).toBeInTheDocument();
-  expect(within(detailsCard).queryByText("Albany")).not.toBeInTheDocument();
-  expect(within(detailsCard).queryByText("NY")).not.toBeInTheDocument();
-  expect(screen.queryByText("Albany · NY")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /^Details$/i }));
+
+  const emptyDetailsCard = screen.getByText("City Details").closest(".card");
+  expect(emptyDetailsCard).toBeInTheDocument();
+  expect(within(emptyDetailsCard).getByText("Select a city to inspect details.")).toBeInTheDocument();
+  expect(within(emptyDetailsCard).queryByText("Albany")).not.toBeInTheDocument();
+  expect(within(emptyDetailsCard).queryByText("NY")).not.toBeInTheDocument();
 });

@@ -219,6 +219,7 @@ export default function App() {
   const [globalError, setGlobalError] = useState(null);
 
   const [stateOptions, setStateOptions] = useState([]);
+  const [explorerTab, setExplorerTab] = useState("explore");
 
   const citiesPath = useMemo(() => {
     const params = new URLSearchParams();
@@ -440,39 +441,35 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {globalError && (
-        <div className="error-banner">
-          {globalError}
-        </div>
-      )}
+      {globalError && <div className="error-banner">{globalError}</div>}
   
-  <header className="topbar">
-  <div className="topbar-left">
-    <div className="hero-badge">ENG404</div>
-    <h1 className="topbar-title">US Geography API</h1>
-  </div>
-
-  <div className="tabs">
-    <button
-      className={`tab-btn ${activeTab === "intro" ? "active" : ""}`}
-      onClick={() => setActiveTab("intro")}
-    >
-      Intro
-    </button>
-    <button
-      className={`tab-btn ${activeTab === "health" ? "active" : ""}`}
-      onClick={() => setActiveTab("health")}
-    >
-      Health
-    </button>
-    <button
-      className={`tab-btn ${activeTab === "explorer" ? "active" : ""}`}
-      onClick={() => setActiveTab("explorer")}
-    >
-      Explorer
-    </button>
-  </div>
-</header>
+      <header className="topbar">
+        <div className="topbar-left">
+          <div className="hero-badge">ENG404</div>
+          <h1 className="topbar-title">US Geography API</h1>
+        </div>
+  
+        <div className="tabs">
+          <button
+            className={`tab-btn ${activeTab === "intro" ? "active" : ""}`}
+            onClick={() => setActiveTab("intro")}
+          >
+            Intro
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "health" ? "active" : ""}`}
+            onClick={() => setActiveTab("health")}
+          >
+            Health
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "explorer" ? "active" : ""}`}
+            onClick={() => setActiveTab("explorer")}
+          >
+            Explorer
+          </button>
+        </div>
+      </header>
   
       {activeTab === "intro" && (
         <section className="tab-page">
@@ -524,8 +521,8 @@ export default function App() {
               <div className="hero-badge">Backend connection</div>
               <h2 className="hero-title">Server health and API base</h2>
               <p className="hero-copy">
-                Use this page to test the backend connection, change the API base,
-                and verify that the app is talking to the correct server.
+                Use this page to test the backend connection, change the API base, and verify that
+                the app is talking to the correct server.
               </p>
             </div>
   
@@ -579,7 +576,9 @@ export default function App() {
                   </span>
                 </div>
   
-                <p className="muted">Base URL is remembered locally; refreshes keep your choice.</p>
+                <p className="muted">
+                  Base URL is remembered locally; refreshes keep your choice.
+                </p>
               </div>
             </div>
           </div>
@@ -615,9 +614,7 @@ export default function App() {
               </div>
   
               {!selectedMapState && (
-                <p className="map-helper-text">
-                  Click a state marker to load cities on the map.
-                </p>
+                <p className="map-helper-text">Click a state marker to load cities on the map.</p>
               )}
   
               {loadingMapCities && <p className="path">Loading cities from map selection...</p>}
@@ -631,166 +628,265 @@ export default function App() {
             </div>
           </div>
   
-          <div className="explorer-bottom-grid">
-            <Card
-              title="City Search"
-              subtitle="Find cities by state, limit, and search term"
-              meta={formatTimestamp(lastTouched.cities)}
+          <div className="explorer-subtabs">
+            <button
+              className={`tab-btn ${explorerTab === "explore" ? "active" : ""}`}
+              onClick={() => setExplorerTab("explore")}
             >
-              <div className="controls">
-                <label className="control">
-                  <span className="label">state_code</span>
-                  <select
-                    className="input"
-                    value={stateCode}
-                    onChange={(e) => setStateCode(e.target.value)}
-                  >
-                    <option value="">Select a state</option>
-                    {stateOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              Explore
+            </button>
+            <button
+              className={`tab-btn ${explorerTab === "details" ? "active" : ""}`}
+              onClick={() => setExplorerTab("details")}
+            >
+              Details
+            </button>
+            <button
+              className={`tab-btn ${explorerTab === "compare" ? "active" : ""}`}
+              onClick={() => setExplorerTab("compare")}
+            >
+              Compare
+            </button>
+          </div>
   
-                <label className="control">
-                  <span className="label">limit</span>
-                  <input
-                    className="input"
-                    type="number"
-                    min="1"
-                    max="200"
-                    value={limit}
-                    onChange={(e) => setLimit(e.target.value)}
-                  />
-                </label>
+          {explorerTab === "explore" && (
+            <div className="explorer-stack">
+              <Card
+                title="City Search"
+                subtitle="Find cities by state and search term"
+                meta={formatTimestamp(lastTouched.cities)}
+              >
+                <div className="controls compact-controls">
+                  <label className="control">
+                    <span className="label">state_code</span>
+                    <select
+                      className="input"
+                      value={stateCode}
+                      onChange={(e) => setStateCode(e.target.value)}
+                    >
+                      <option value="">Select a state</option>
+                      {stateOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
   
-                <label className="control">
-                  <span className="label">search</span>
-                  <input
-                    className="input"
-                    value={cityQuery}
-                    onChange={(e) => {
-                      setCityQuery(e.target.value);
-                      setVisibleCount(10);
-                    }}
-                    placeholder="e.g. York"
-                  />
-                </label>
+                  <label className="control">
+                    <span className="label">search</span>
+                    <input
+                      className="input"
+                      value={cityQuery}
+                      onChange={(e) => {
+                        setCityQuery(e.target.value);
+                        setVisibleCount(10);
+                      }}
+                      placeholder="e.g. York"
+                    />
+                  </label>
   
-                <label className="control">
-                  <span className="label">sort</span>
-                  <select
-                    className="input"
-                    aria-label="city sort"
-                    value={sortDir}
-                    onChange={(e) => setSortDir(e.target.value)}
-                  >
-                    <option value="asc">A → Z</option>
-                    <option value="desc">Z → A</option>
-                  </select>
-                </label>
+                  <label className="control">
+                    <span className="label">sort</span>
+                    <select
+                      className="input"
+                      aria-label="city sort"
+                      value={sortDir}
+                      onChange={(e) => setSortDir(e.target.value)}
+                    >
+                      <option value="asc">A → Z</option>
+                      <option value="desc">Z → A</option>
+                    </select>
+                  </label>
   
-                <div className="control-group">
-                  <button className="btn" onClick={loadCities} disabled={loadingCities}>
-                    {loadingCities ? "Loading..." : "Search cities"}
-                  </button>
-                  <button
-                    className="btn btn-ghost"
-                    onClick={() => {
-                      setCities(null);
-                      setCitiesErr(null);
-                      setStateCode(DEFAULT_STATE_CODE);
-                      setLimit(DEFAULT_LIMIT);
-                      setCityQuery("");
-                      setSortDir("asc");
-                      setVisibleCount(10);
-                      setSelectedCityDetail(null);
-                      setShowRawCityJson(false);
-                    }}
-                  >
-                    Clear
-                  </button>
+                  <div className="control-group">
+                    <button className="btn" onClick={loadCities} disabled={loadingCities}>
+                      {loadingCities ? "Loading..." : "Search cities"}
+                    </button>
+                    <button
+                      className="btn btn-ghost"
+                      onClick={() => {
+                        setCities(null);
+                        setCitiesErr(null);
+                        setStateCode(DEFAULT_STATE_CODE);
+                        setCityQuery("");
+                        setSortDir("asc");
+                        setVisibleCount(10);
+                        setSelectedCityDetail(null);
+                        setShowRawCityJson(false);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
-              </div>
   
-              <div className="path-row">
-                {/* <span className="endpoint-chip muted">Path: {citiesPath}</span> */}
-                <span className="muted">Auto-loads on mount with NY & limit 10.</span>
-              </div>
+                <span className="muted">Select a state and search term to explore cities.</span>
   
-              {citiesErr && <p className="path error-text">{citiesErr}</p>}
-              {loadingCities && <p className="path">Crunching results...</p>}
+                {citiesErr && <p className="path error-text">{citiesErr}</p>}
+                {loadingCities && <p className="path">Crunching results...</p>}
   
-              {Array.isArray(citiesArray) && (
-                <>
-                  <p className="meta">
-                    Results: <b>{filteredCities.length}</b> (showing {visibleCities.length})
-                  </p>
-
-                  <ul className="list">
-                    {visibleCities.map((c, idx) => {
-                      const links = Array.isArray(c.links) ? c.links : [];
-                      const isSelected = selectedCities.some((sc) => sc.name === c.name);
-                      const isDetailSelected =
-                        selectedCityDetail &&
-                        selectedCityDetail.name === c.name &&
-                        selectedCityDetail.state_code === c.state_code;
-
-                      return (
-                        <li
-                          key={idx}
-                          className={`city-item list-item-selectable ${isDetailSelected ? "active" : ""}`}
-                          onClick={() => {
-                            setSelectedCityDetail(c);
-                            setShowRawCityJson(false);
-                          }}
-                        >
-                          <div className="city-name">{c.name}</div>
-                          <div className="city-meta">{c.state_code}</div>
-
-                          {links.length > 0 && (
-                            <div className="city-links">
-                              {links.map((l, i) => (
-                                <span key={i} className="endpoint-chip muted">
-                                  {l.rel}: {l.href}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                {Array.isArray(citiesArray) && (
+                  <>
+                    <p className="meta">
+                      Results: <b>{filteredCities.length}</b> (showing {visibleCities.length})
+                    </p>
   
-                          <div style={{ marginTop: 8 }}>
-                            <button
-                              className={`btn compare-btn ${isSelected ? "active" : "inactive"}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleSelectCity(c);
+                    <div className="scroll-box">
+                      <ul className="list">
+                        {visibleCities.map((c, idx) => {
+                          const links = Array.isArray(c.links) ? c.links : [];
+                          const isSelected = selectedCities.some((sc) => sc.name === c.name);
+                          const isDetailSelected =
+                            selectedCityDetail &&
+                            selectedCityDetail.name === c.name &&
+                            selectedCityDetail.state_code === c.state_code;
+  
+                          return (
+                            <li
+                              key={idx}
+                              className={`city-item list-item-selectable ${
+                                isDetailSelected ? "active" : ""
+                              }`}
+                              onClick={() => {
+                                setSelectedCityDetail(c);
+                                setShowRawCityJson(false);
+                                setExplorerTab("details");
                               }}
                             >
-                              {isSelected ? "✓ Compare" : "Compare"}
-                              {selectedCities.length >= 3 && !isSelected && " (max 3)"}
-                            </button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                              <div className="city-name">{c.name}</div>
+                              <div className="city-meta">{c.state_code}</div>
   
-                  {visibleCities.length < filteredCities.length && (
-                    <button
-                      className="btn"
-                      onClick={() => setVisibleCount((n) => n + 10)}
-                    >
-                      Load more
+                              {links.length > 0 && (
+                                <div className="city-links">
+                                  {links.map((l, i) => (
+                                    <span key={i} className="endpoint-chip muted">
+                                      {l.rel}: {l.href}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+  
+                              <div style={{ marginTop: 8 }}>
+                                <button
+                                  className={`btn compare-btn ${
+                                    isSelected ? "active" : "inactive"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSelectCity(c);
+                                    setExplorerTab("compare");
+                                  }}
+                                >
+                                  {isSelected ? "✓ Compare" : "Compare"}
+                                  {selectedCities.length >= 3 && !isSelected && " (max 3)"}
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+  
+                    {visibleCities.length < filteredCities.length && (
+                      <button className="btn" onClick={() => setVisibleCount((n) => n + 10)}>
+                        Load more
+                      </button>
+                    )}
+                  </>
+                )}
+  
+                {cities && !Array.isArray(cities) && <JsonBox value={cities} />}
+              </Card>
+  
+              <Card
+                title="State Catalog"
+                subtitle="Browse all available states from the backend"
+                meta={formatTimestamp(lastTouched.states)}
+              >
+                <div className="card-toolbar">
+                  <div className="toolbar-actions">
+                    <div className="control control-wide">
+                      <span className="label">Filter</span>
+                      <input
+                        className="input"
+                        value={stateSearch}
+                        onChange={(e) => setStateSearch(e.target.value)}
+                        placeholder="Search name or code"
+                      />
+                    </div>
+  
+                    <div className="control control-mid">
+                      <span className="label">Sort</span>
+                      <select
+                        className="input"
+                        value={stateSortDir}
+                        onChange={(e) => setStateSortDir(e.target.value)}
+                      >
+                        <option value="asc">A → Z</option>
+                        <option value="desc">Z → A</option>
+                      </select>
+                    </div>
+  
+                    <button className="btn" onClick={loadStates} disabled={loadingStates}>
+                      {loadingStates ? "Loading..." : "Load states"}
                     </button>
-                  )}
-                </>
-              )}
+                  </div>
+                </div>
   
-              {cities && !Array.isArray(cities) && <JsonBox value={cities} />}
-            </Card>
-
+                {statesErr && <p className="path error-text">{statesErr}</p>}
+                {loadingStates && <p className="path">Contacting backend...</p>}
+  
+                {!loadingStates && !statesResp && !statesErr && (
+                  <p className="path">No states loaded yet. Press “Load states” to pull the catalog.</p>
+                )}
+  
+                {statesResp && (
+                  <>
+                    <p className="meta">
+                      Total states: <b>{stateList.length || statesResp["Number of Records"] || 0}</b>
+                      {stateSearch.trim() && (
+                        <span style={{ marginLeft: 8, color: "var(--ink-500)" }}>
+                          ({filteredStates.length} match{filteredStates.length === 1 ? "" : "es"})
+                        </span>
+                      )}
+                    </p>
+  
+                    <div className="card-subsection panel-soft">
+                      {filteredStates.length === 0 ? (
+                        <p className="path">No states match that search.</p>
+                      ) : (
+                        <div className="scroll-box">
+                          <ul className="list" aria-label="state list" style={{ margin: 0 }}>
+                            {filteredStates.map((state) => {
+                              const isSelected = stateCode === state.code;
+                              return (
+                                <li
+                                  key={state.code || state.name}
+                                  className={`city-item list-item-selectable ${
+                                    isSelected ? "active" : ""
+                                  }`}
+                                  onClick={() => {
+                                    if (state.code) setStateCode(state.code);
+                                    setSelectedMapState(state.code || null);
+                                  }}
+                                >
+                                  <div className="city-name">{state.name || state.code}</div>
+                                  <div className="city-meta">{state.code || "—"}</div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </Card>
+            </div>
+          )}
+  
+          {explorerTab === "details" && (
             <Card
               title="City Details"
               subtitle="Inspect a single city record"
@@ -808,131 +904,43 @@ export default function App() {
                     <DetailRow label="Longitude" value={selectedCityDetail.longitude} />
                     <DetailRow label="Timezone" value={selectedCityDetail.timezone} />
                   </div>
-
+  
                   <button
                     className="btn btn-ghost"
                     onClick={() => setShowRawCityJson((prev) => !prev)}
                   >
                     {showRawCityJson ? "Hide raw JSON" : "Show raw JSON"}
                   </button>
-
+  
                   {showRawCityJson && <JsonBox value={selectedCityDetail} />}
                 </>
               )}
             </Card>
-
+          )}
+  
+          {explorerTab === "compare" && (
             <Card
               title="City Comparison"
               subtitle="Compare selected cities"
-              meta={`${selectedCities.length} ${selectedCities.length === 1 ? "city" : "cities"} selected`}
+              meta={`${selectedCities.length} ${
+                selectedCities.length === 1 ? "city" : "cities"
+              } selected`}
             >
               {selectedCities.length > 0 ? (
                 <div className="compare-content">
-                  <CityComparison
-                    cities={selectedCities}
-                    onRemoveCity={removeSelectedCity}
-                  />
+                  <CityComparison cities={selectedCities} onRemoveCity={removeSelectedCity} />
                 </div>
               ) : (
                 <div className="compare-empty">
-                  <p className="path">Select up to 3 cities to compare.</p>
+                  <p className="path">Select up to 3 cities from Explore to compare.</p>
                 </div>
               )}
             </Card>
-          </div>
-
-            <Card
-              title="State Catalog"
-              subtitle="Browse all available states from the backend"
-              meta={formatTimestamp(lastTouched.states)}
-            >
-              <div className="card-toolbar">
-                {/* <div className="endpoint-chip">GET /state/read</div> */}
-                <div className="toolbar-actions">
-                  <div className="control control-wide">
-                    <span className="label">Filter</span>
-                    <input
-                      className="input"
-                      value={stateSearch}
-                      onChange={(e) => setStateSearch(e.target.value)}
-                      placeholder="Search name or code"
-                    />
-                  </div>
-  
-                  <div className="control control-mid">
-                    <span className="label">Sort</span>
-                    <select
-                      className="input"
-                      value={stateSortDir}
-                      onChange={(e) => setStateSortDir(e.target.value)}
-                    >
-                      <option value="asc">A → Z</option>
-                      <option value="desc">Z → A</option>
-                    </select>
-                  </div>
-  
-                  <button className="btn" onClick={loadStates} disabled={loadingStates}>
-                    {loadingStates ? "Loading..." : "Load states"}
-                  </button>
-                </div>
-              </div>
-  
-              {statesErr && <p className="path error-text">{statesErr}</p>}
-              {loadingStates && <p className="path">Contacting backend...</p>}
-  
-              {!loadingStates && !statesResp && !statesErr && (
-                <p className="path">No states loaded yet. Press “Load states” to pull the catalog.</p>
-              )}
-  
-              {statesResp && (
-                <>
-                  <p className="meta">
-                    Total states: <b>{stateList.length || statesResp["Number of Records"] || 0}</b>
-                    {stateSearch.trim() && (
-                      <span style={{ marginLeft: 8, color: "var(--ink-500)" }}>
-                        ({filteredStates.length} match{filteredStates.length === 1 ? "" : "es"})
-                      </span>
-                    )}
-                  </p>
-  
-                  <div className="card-subsection panel-soft">
-                    {filteredStates.length === 0 ? (
-                      <p className="path">No states match that search.</p>
-                    ) : (
-                      <div className="scroll-box">
-                        <ul className="list" aria-label="state list" style={{ margin: 0 }}>
-                          {filteredStates.map((state) => {
-                            const isSelected = stateCode === state.code;
-                            return (
-                              <li
-                                key={state.code || state.name}
-                                className={`city-item list-item-selectable ${isSelected ? "active" : ""}`}
-                                onClick={() => {
-                                  if (state.code) setStateCode(state.code);
-                                  setSelectedMapState(state.code || null);
-                                }}
-                              >
-                                <div className="city-name">
-                                  {state.name || state.code}
-                                </div>
-                                <div className="city-meta">
-                                  {state.code || "—"}
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </Card>
-  
-            
-  
+          )}
         </section>
       )}
     </div>
+  );
 
-  )};
+              }
+              

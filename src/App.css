@@ -627,3 +627,33 @@
   display: flex;
   justify-content: flex-start;
 }
+
+
+
+.explorer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+ }
+ 
+ 
+ .explorer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+ }
+ 
+ 
+ .compact-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+ }
+ 
+ 
+ .scroll-box {
+  max-height: 320px;
+  overflow-y: auto;
+ }
+ 
