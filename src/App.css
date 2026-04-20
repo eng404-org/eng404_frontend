@@ -419,7 +419,7 @@
   color: #1f2937;
 }
 
-.topbar {
+/* .topbar {
   width: 100%;
   margin: 0;
   padding: 16px 40px;
@@ -432,6 +432,13 @@
   border-bottom: 1px solid var(--outline);
   border-radius: 0;
   box-shadow: none;
+} */
+
+.topbar {
+  width: calc(100% + 80px);
+  margin-left: -40px;
+  margin-right: -40px;
+  padding: 16px 40px;
 }
 
 .topbar-left {
@@ -441,15 +448,16 @@
 }
 
 .topbar-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin: 0;
+  font-size: 25px;
+  font-weight: 1000;
+  margin-top: 20px;
   color: var(--ink-900);
 }
 
 .tabs {
   display: flex;
   gap: 8px;
+  margin-top: 11px;
 }
 
 .tab-btn {
@@ -627,14 +635,6 @@
   display: flex;
   justify-content: flex-start;
 }
-
-
-
-.explorer-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
- }
  
  
  .explorer-stack {

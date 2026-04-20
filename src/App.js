@@ -900,8 +900,8 @@ export default function App() {
                     <DetailRow label="Name" value={selectedCityDetail.name} />
                     <DetailRow label="State" value={selectedCityDetail.state_code} />
                     <DetailRow label="Population" value={selectedCityDetail.population} />
-                    <DetailRow label="Latitude" value={selectedCityDetail.latitude} />
-                    <DetailRow label="Longitude" value={selectedCityDetail.longitude} />
+                    <DetailRow label="Latitude" value={selectedCityDetail.lat} />
+                    <DetailRow label="Longitude" value={selectedCityDetail.lng} />
                     <DetailRow label="Timezone" value={selectedCityDetail.timezone} />
                   </div>
   
