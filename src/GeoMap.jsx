@@ -94,7 +94,7 @@ const STATE_VIEW = {
   NJ: { center: [40.298904, -74.521011], zoom: 8 },
   MA: { center: [42.230171, -71.530106], zoom: 7 },
   NY: { center: [42.165726, -74.948051], zoom: 7 },
-  default: { zoom: 6 }
+  default: { zoom: 7 }
 };
 
 function MapZoomWatcher({ onZoomChange }) {
@@ -175,6 +175,80 @@ function CityMarkers({ points, radiusFor }) {
     </>
   );
 }
+
+function StateMarkers({ states, selectedState, onStateSelect }) {
+  const map = useMap();
+
+  const handleStateClick = (state) => {
+    const coords = STATE_COORDS[state.code];
+    if (!coords) return;
+
+    const view = STATE_VIEW[state.code];
+    const center = view?.center ?? coords;
+    const zoom = view?.zoom ?? STATE_VIEW.default.zoom;
+
+    map.setView(center, zoom, { animate: true });
+
+    if (onStateSelect) {
+      onStateSelect(state.code);
+    }
+  };
+
+  return (
+    <>
+      {states.map((state) => {
+        const coords = STATE_COORDS[state.code];
+        if (!coords) return null;
+
+        return (
+          <CircleMarker
+            key={state.code}
+            center={coords}
+            radius={
+              selectedState === state.code
+                ? SELECTED_STATE_MARKER.radius
+                : UNSELECTED_STATE_MARKER.radius
+            }
+            pathOptions={
+              selectedState === state.code
+                ? SELECTED_STATE_MARKER
+                : UNSELECTED_STATE_MARKER
+            }
+            eventHandlers={{
+              click: () => handleStateClick(state),
+              mouseover: (e) => e.target.openTooltip(),
+              mouseout: (e) => e.target.closeTooltip(),
+            }}
+          >
+            <Tooltip direction="top" offset={[0, -4]} opacity={1}>
+              <div>
+                <strong>{state.name}</strong>
+                <br />
+                State code: {state.code}
+                <br />
+                Click to load cities
+              </div>
+            </Tooltip>
+
+            <Popup>
+              <div
+                onClick={() => handleStateClick(state)}
+                style={{ cursor: "pointer" }}
+              >
+                <strong>{state.name}</strong>
+                <br />
+                State code: {state.code}
+                <br />
+                Click to load cities
+              </div>
+            </Popup>
+          </CircleMarker>
+        );
+      })}
+    </>
+  );
+}
+
 export default function GeoMap({ selectedState, cities = [], states = [], onStateSelect }) {
   const [zoom, setZoom] = React.useState(MAP_ZOOM);
 
@@ -182,18 +256,18 @@ export default function GeoMap({ selectedState, cities = [], states = [], onStat
     return Array.isArray(cities)
       ? cities
           .map((c) => {
-            const lat = c.lat ?? c.latitude;
-            const lng = c.lng ?? c.longitude;
-
+            const lat = Number(c.lat ?? c.latitude);
+            const lng = Number(c.lng ?? c.longitude);
+  
             return {
               name: c.name ?? "Unknown",
               state: c.state_code ?? c.state ?? "",
               lat,
               lng,
-              population: c.population ?? 1,
+              population: Number(c.population ?? 1),
             };
           })
-          .filter((c) => typeof c.lat === "number" && typeof c.lng === "number")
+          .filter((c) => !Number.isNaN(c.lat) && !Number.isNaN(c.lng))
       : [];
   }, [cities]);
 
@@ -205,6 +279,8 @@ export default function GeoMap({ selectedState, cities = [], states = [], onStat
   }, []);
 
   const showCities = Boolean(selectedState) && zoom >= CITY_VISIBLE_ZOOM && points.length > 0;
+
+  console.log("selectedState:", selectedState, "cities:", cities, "points:", points);
 
   return (
     <div className="card">
@@ -223,53 +299,11 @@ export default function GeoMap({ selectedState, cities = [], states = [], onStat
           <MapZoomWatcher onZoomChange={setZoom} />
           <FlyToSelectedState selectedState={selectedState} />
 
-          {states.map((state) => {
-  const coords = STATE_COORDS[state.code];
-  if (!coords) return null;
-
-  return (
-    <CircleMarker
-      key={state.code}
-      center={coords}
-      radius={
-        selectedState === state.code
-          ? SELECTED_STATE_MARKER.radius
-          : UNSELECTED_STATE_MARKER.radius
-      }
-      pathOptions={
-        selectedState === state.code
-          ? SELECTED_STATE_MARKER
-          : UNSELECTED_STATE_MARKER
-      }
-      eventHandlers={{
-        click: () => onStateSelect && onStateSelect(state.code),
-        mouseover: (e) => e.target.openTooltip(),
-        mouseout: (e) => e.target.closeTooltip(),
-      }}
-    >
-      <Tooltip direction="top" offset={[0, -4]} opacity={1}>
-        <div>
-          <strong>{state.name}</strong>
-          <br />
-          State code: {state.code}
-          <br />
-          Click to load cities
-        </div>
-      </Tooltip>
-
-      <Popup>
-        <div>
-          <strong>{state.name}</strong>
-          <br />
-          State code: {state.code}
-          <br />
-          Click to load cities
-        </div>
-      </Popup>
-    </CircleMarker>
-  );
-})}
-
+          <StateMarkers
+            states={states}
+            selectedState={selectedState}
+            onStateSelect={onStateSelect}
+          />
           {showCities && <CityMarkers points={points} radiusFor={radiusFor} />}
         </MapContainer>
       </div>

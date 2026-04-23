@@ -4,6 +4,7 @@ import "@testing-library/jest-dom";
 import GeoMap from "./GeoMap";
 
 const mockFlyTo = jest.fn();
+const mockSetView = jest.fn();
 const mockOn = jest.fn();
 const mockOff = jest.fn();
 let mockZoom = 7;
@@ -27,6 +28,7 @@ jest.mock("react-leaflet", () => ({
   ),
   useMap: () => ({
     flyTo: mockFlyTo,
+    setView: mockSetView,
     getZoom: () => mockZoom,
     on: mockOn,
     off: mockOff,
@@ -36,6 +38,7 @@ jest.mock("react-leaflet", () => ({
 describe("GeoMap Component", () => {
   beforeEach(() => {
     mockFlyTo.mockClear();
+    mockSetView.mockClear();
     mockOn.mockClear();
     mockOff.mockClear();
     mockZoom = 7;
@@ -184,9 +187,9 @@ describe("GeoMap Component", () => {
     expect(markers).toHaveLength(3);
   });
 
-  test("calls onStateSelect when a state marker is clicked", () => {
+  test("calls setView and onStateSelect when a state marker is clicked", () => {
     const onStateSelect = jest.fn();
-
+  
     render(
       <GeoMap
         selectedState="NY"
@@ -195,10 +198,16 @@ describe("GeoMap Component", () => {
         onStateSelect={onStateSelect}
       />
     );
-
+  
     const markers = screen.getAllByTestId("circle-marker");
     fireEvent.click(markers[1]);
-
+  
+    expect(mockSetView).toHaveBeenCalledWith(
+      [36.116203, -119.681564],
+      7,
+      { animate: true }
+    );
+  
     expect(onStateSelect).toHaveBeenCalledWith("CA");
   });
 
@@ -223,7 +232,7 @@ describe("GeoMap Component", () => {
       />
     );
 
-    expect(mockFlyTo).toHaveBeenCalledWith([36.116203, -119.681564], 6, { duration: 1.2 });
+    expect(mockFlyTo).toHaveBeenCalledWith([36.116203, -119.681564], 7, { duration: 1.2 });
   });
 
   test("shows state tooltip content", () => {
