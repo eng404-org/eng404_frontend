@@ -17,10 +17,14 @@ jest.mock("./GeoMap", () => {
 
 
 jest.mock("./HelloHealthCard", () => {
- return function MockHelloHealthCard({ apiBase }) {
-   return <div data-testid="hello-health-card">HelloHealthCard: {apiBase}</div>;
- };
-});
+  return function MockHelloHealthCard({ apiBase, isAdmin }) {
+    return (
+      <div data-testid="hello-health-card">
+        HelloHealthCard: {apiBase} Admin: {String(isAdmin)}
+      </div>
+    );
+  };
+ });
 
 
 describe("App Component", () => {
@@ -88,6 +92,20 @@ describe("App Component", () => {
        });
      }
 
+     if (url.includes("/login")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            Message: "Login successful",
+            email: "admin@eng404.com",
+          }),
+        json: async () => ({
+          Message: "Login successful",
+          email: "admin@eng404.com",
+        }),
+      });
+    }
 
      return Promise.resolve({
        ok: true,
@@ -190,6 +208,7 @@ describe("App Component", () => {
  });
 
 
+ 
  test("clear button resets city filters to defaults", async () => {
  render(<App />);
  await openExplorerTab();
@@ -225,6 +244,27 @@ describe("App Component", () => {
  expect(searchInput).toHaveValue("");
  expect(sortSelect).toHaveValue("asc");
  });
+
+
+test("passes admin status to health card after admin login", async () => {
+  render(<App />);
+
+  fireEvent.change(screen.getByPlaceholderText(/Admin/i), {
+    target: { value: "admin@eng404.com" },
+  });
+
+  fireEvent.change(screen.getByPlaceholderText("••••"), {
+    target: { value: "eng404" },
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: /^Login$/i }));
+
+  fireEvent.click(screen.getByRole("button", { name: /^Health$/i }));
+
+  await waitFor(() => {
+    expect(screen.getByTestId("hello-health-card")).toHaveTextContent("Admin: true");
+  });
+});
 });
 
 

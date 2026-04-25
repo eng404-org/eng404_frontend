@@ -93,7 +93,7 @@ function HealthBadge({ status, latencyMs }) {
   );
 }
 
-export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
+export default function HelloHealthCard({ apiBase = DEFAULT_API_URL, isAdmin = false, }) {
   const cleanBase = useMemo(() => normalizeBase(apiBase), [apiBase]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("idle");
@@ -188,12 +188,18 @@ export default function HelloHealthCard({ apiBase = DEFAULT_API_URL }) {
         )}
 
         {data && (
-          <details style={{ marginTop: 4 }}>
-            <summary style={{ cursor: "pointer", opacity: 0.8 }}>Show raw JSON</summary>
-            <pre className="json" style={{ marginTop: 8 }}>
-              {JSON.stringify(data, null, 2)}
-            </pre>
-          </details>
+          isAdmin ? (
+            <details style={{ marginTop: 4 }}>
+              <summary style={{ cursor: "pointer", opacity: 0.8 }}>
+                Show raw JSON
+              </summary>
+              <pre className="json" style={{ marginTop: 8 }}>
+                {JSON.stringify(data, null, 2)}
+              </pre>
+            </details>
+          ) : (
+            <p className="muted">Admin login required to view raw JSON.</p>
+          )
         )}
       </div>
     </div>

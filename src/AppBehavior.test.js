@@ -272,8 +272,8 @@ test("filters, sorts, and expands the city list returned from the cities endpoin
   });
 });
 
-test("clicking a city shows details panel and raw JSON toggle", async () => {
-  const cities = [
+test("clicking a city shows details panel and hides raw JSON for non-admin", async () => {
+    const cities = [
     { name: "Albany", state_code: "NY", population: 100000, latitude: 42.6526, longitude: -73.7562, timezone: "EST" },
     { name: "Boston", state_code: "MA", population: 600000 },
   ];
@@ -334,11 +334,8 @@ test("clicking a city shows details panel and raw JSON toggle", async () => {
 
   expect(screen.getByRole("button", { name: /^Details$/i })).toHaveClass("active");
 
-  const toggle = screen.getByRole("button", { name: /show raw json/i });
-  fireEvent.click(toggle);
-  expect(screen.getByText(/\"Albany\"/)).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: /hide raw json/i }));
-  expect(screen.queryByText(/\"Albany\"/)).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /show raw json/i })).not.toBeInTheDocument();
+  expect(screen.getByText(/Admin login required to view raw JSON/i)).toBeInTheDocument();
 });
 
 test("details panel clears when selected city is filtered out", async () => {

@@ -221,6 +221,51 @@ export default function App() {
   const [stateOptions, setStateOptions] = useState([]);
   const [explorerTab, setExplorerTab] = useState("explore");
 
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminJson, setAdminJson] = useState(null);
+  const [adminMessage, setAdminMessage] = useState("");
+
+  const handleAdminLogin = async () => {
+    const response = await fetch(`${apiBase}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: loginEmail,
+        password: loginPassword,
+      }),
+    });
+  
+    const data = await response.json();
+  
+    if (!response.ok) {
+      setIsAdmin(false);
+      setAdminMessage(data.Message || "Login failed");
+      return;
+    }
+  
+    setIsAdmin(true);
+    setAdminMessage(`Logged in as ${data.email}`);
+  };
+  
+  const fetchAdminRawJson = async () => {
+    const response = await fetch(
+      `${apiBase}/admin/raw-json?email=${loginEmail}&logged_in=true`
+    );
+  
+    const data = await response.json();
+  
+    if (!response.ok) {
+      setAdminMessage(data.Message || "Unable to load raw JSON");
+      return;
+    }
+  
+    setAdminJson(data);
+  };
+
   const citiesPath = useMemo(() => {
     const params = new URLSearchParams();
     if (stateCode.trim()) params.set("state_code", stateCode.trim());
@@ -443,33 +488,42 @@ export default function App() {
     <div className="app-shell">
       {globalError && <div className="error-banner">{globalError}</div>}
   
-      <header className="topbar">
-        <div className="topbar-left">
-          <div className="hero-badge">ENG404</div>
-          <h1 className="topbar-title">US Geography API</h1>
-        </div>
-  
-        <div className="tabs">
-          <button
-            className={`tab-btn ${activeTab === "intro" ? "active" : ""}`}
-            onClick={() => setActiveTab("intro")}
-          >
-            Intro
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "health" ? "active" : ""}`}
-            onClick={() => setActiveTab("health")}
-          >
-            Health
-          </button>
-          <button
-            className={`tab-btn ${activeTab === "explorer" ? "active" : ""}`}
-            onClick={() => setActiveTab("explorer")}
-          >
-            Explorer
-          </button>
-        </div>
-      </header>
+<header className="topbar">
+  <div className="topbar-left">
+    <div className="hero-badge">ENG404</div>
+
+    <div className="title-tabs">
+      <h1 className="topbar-title">US Geography API</h1>
+
+      <div className="tabs">
+        <button className={`tab-btn ${activeTab === "intro" ? "active" : ""}`} onClick={() => setActiveTab("intro")}>
+          Intro
+        </button>
+        <button className={`tab-btn ${activeTab === "health" ? "active" : ""}`} onClick={() => setActiveTab("health")}>
+          Health
+        </button>
+        <button className={`tab-btn ${activeTab === "explorer" ? "active" : ""}`} onClick={() => setActiveTab("explorer")}>
+          Explorer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div className="admin-right">
+    {!isAdmin ? (
+      <>
+        <input className="admin-input" placeholder="Admin" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
+        <input className="admin-input" type="password" placeholder="••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+        <button className="tab-btn" onClick={handleAdminLogin}>Login</button>
+      </>
+    ) : (
+      <>
+        <span className="admin-status">Admin</span>
+        <button className="tab-btn" onClick={fetchAdminRawJson}>JSON</button>
+      </>
+    )}
+  </div>
+</header>
   
       {activeTab === "intro" && (
         <section className="tab-page">
@@ -583,7 +637,7 @@ export default function App() {
             </div>
           </div>
   
-          <HelloHealthCard apiBase={apiBase} />
+          <HelloHealthCard apiBase={apiBase} isAdmin={isAdmin} />
         </section>
       )}
   
@@ -905,14 +959,20 @@ export default function App() {
                     <DetailRow label="Timezone" value={selectedCityDetail.timezone} />
                   </div>
   
-                  <button
-                    className="btn btn-ghost"
-                    onClick={() => setShowRawCityJson((prev) => !prev)}
-                  >
-                    {showRawCityJson ? "Hide raw JSON" : "Show raw JSON"}
-                  </button>
-  
-                  {showRawCityJson && <JsonBox value={selectedCityDetail} />}
+                  {isAdmin ? (
+                    <>
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => setShowRawCityJson((prev) => !prev)}
+                      >
+                        {showRawCityJson ? "Hide raw JSON" : "Show raw JSON"}
+                      </button>
+
+                      {showRawCityJson && <JsonBox value={selectedCityDetail} />}
+                    </>
+                  ) : (
+                    <p className="muted">Admin login required to view raw JSON.</p>
+                  )}
                 </>
               )}
             </Card>
