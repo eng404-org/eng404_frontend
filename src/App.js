@@ -999,6 +999,16 @@ export default function App() {
           )}
         </section>
       )}
+
+    {isAdmin && adminJson && (
+      <pre style={{ display: "none" }}>
+        {JSON.stringify(adminJson)}
+      </pre>
+    )}
+
+    {isAdmin && adminMessage && (
+      <span style={{ display: "none" }}>{adminMessage}</span>
+    )}
     </div>
   );
 
