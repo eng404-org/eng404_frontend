@@ -126,7 +126,6 @@ export default function App() {
   const [loadingMapCities, setLoadingMapCities] = useState(false);
   const [mapCitiesErr, setMapCitiesErr] = useState(null);
 
-  // eslint-disable-next-line no-unused-vars
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
 
