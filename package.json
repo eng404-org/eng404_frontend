@@ -4,15 +4,15 @@
   "private": true,
   "proxy": "http://127.0.0.1:8000",
   "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
+    "@testing-library/dom": "^8.20.1",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "leaflet": "^1.9.4",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-leaflet": "^5.0.0",
-    "react-leaflet-cluster": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1",
+    "react-leaflet-cluster": "^3.1.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
@@ -20,12 +20,33 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx"
+  },
+  "overrides": {
+    "typescript": "4.9.5",
+    "fork-ts-checker-webpack-plugin": {
+      "typescript": "4.9.5"
+    }
   },
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "**/*.test.js",
+          "**/*.test.jsx"
+        ],
+        "rules": {
+          "testing-library/no-container": "off",
+          "testing-library/no-node-access": "off",
+          "testing-library/no-wait-for-multiple-assertions": "off",
+          "testing-library/prefer-presence-queries": "off"
+        }
+      }
     ]
   },
   "browserslist": {
@@ -39,5 +60,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "string.prototype.trim": "^1.2.10"
   }
 }

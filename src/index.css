@@ -4,6 +4,14 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont,
@@ -16,10 +24,23 @@ body {
   scroll-behavior: smooth;
 }
 
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
   padding: 0.1rem 0.3rem;
   border-radius: 6px;
   background: rgba(15, 23, 42, 0.06);
+}
+
+::selection {
+  background: rgba(251, 191, 36, 0.25);
 }

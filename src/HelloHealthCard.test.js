@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import HelloHealthCard from './HelloHealthCard';
 
@@ -99,20 +98,36 @@ describe('HelloHealthCard Component', () => {
     });
   });
 
-  test('shows raw JSON data in details element', async () => {
+  test('hides raw JSON data for non-admin users', async () => {
     const mockData = { status: 'ok', version: '1.0.0' };
     fetch.mockResolvedValueOnce({
       ok: true,
       text: async () => JSON.stringify(mockData),
     });
-    
-    render(<HelloHealthCard />);
+  
+    render(<HelloHealthCard isAdmin={false} />);
     const button = screen.getByRole('button', { name: /check backend status/i });
     fireEvent.click(button);
-    
+  
     await waitFor(() => {
-      const details = screen.getByText(/show raw json/i);
-      expect(details).toBeInTheDocument();
+      expect(screen.queryByText(/show raw json/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/admin login required to view raw json/i)).toBeInTheDocument();
+    });
+  });
+  
+  test('shows raw JSON data for admin users', async () => {
+    const mockData = { status: 'ok', version: '1.0.0' };
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      text: async () => JSON.stringify(mockData),
+    });
+  
+    render(<HelloHealthCard isAdmin={true} />);
+    const button = screen.getByRole('button', { name: /check backend status/i });
+    fireEvent.click(button);
+  
+    await waitFor(() => {
+      expect(screen.getByText(/show raw json/i)).toBeInTheDocument();
     });
   });
 
