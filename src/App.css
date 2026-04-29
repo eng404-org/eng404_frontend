@@ -701,3 +701,19 @@
   overflow-y: auto;
  }
  
+ @media (max-width: 700px) {
+  .topbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .admin-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+}
