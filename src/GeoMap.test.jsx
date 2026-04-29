@@ -211,6 +211,37 @@ describe("GeoMap Component", () => {
     expect(onStateSelect).toHaveBeenCalledWith("CA");
   });
 
+  test("calls onCitySelect with the city object when a city marker is clicked", () => {
+    const onCitySelect = jest.fn();
+    const cities = [
+      {
+        name: "Albany",
+        state_code: "NY",
+        lat: 42.6526,
+        lng: -73.7562,
+        population: 100000,
+        timezone: "America/New_York",
+      },
+    ];
+
+    mockZoom = 7;
+
+    render(
+      <GeoMap
+        selectedState="NY"
+        cities={cities}
+        states={states}
+        onStateSelect={jest.fn()}
+        onCitySelect={onCitySelect}
+      />
+    );
+
+    const markers = screen.getAllByTestId("circle-marker");
+    fireEvent.click(markers[2]);
+
+    expect(onCitySelect).toHaveBeenCalledWith(cities[0]);
+  });
+
   test("flies to selected state using configured state zoom", () => {
     const { rerender } = render(
       <GeoMap

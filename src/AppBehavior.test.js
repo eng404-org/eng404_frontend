@@ -1,14 +1,19 @@
 import React from "react";
-import { render, screen, waitFor, within, fireEvent} from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import App from "./App";
 
 jest.mock("./GeoMap", () => {
-  return function MockGeoMap({ selectedState, cities }) {
+  return function MockGeoMap({ selectedState, cities, onCitySelect }) {
     return (
       <div data-testid="geo-map">
         GeoMap {selectedState || "none"} {Array.isArray(cities) ? cities.length : 0}
+        {Array.isArray(cities) && cities.length > 0 && (
+          <button type="button" onClick={() => onCitySelect?.(cities[0])}>
+            Select first map city
+          </button>
+        )}
       </div>
     );
   };
@@ -20,12 +25,37 @@ jest.mock("./HelloHealthCard", () => {
   };
 });
 
-function openHealthTab() {
-  fireEvent.click(screen.getByRole("button", { name: /^Health$/i }));
+function jsonResponse(data, extra = {}) {
+  return Promise.resolve({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    text: async () => JSON.stringify(data),
+    json: async () => data,
+    ...extra,
+  });
 }
 
-function openExplorerTab() {
-  fireEvent.click(screen.getByRole("button", { name: /^Explorer$/i }));
+async function waitForInitialAppLoads(base = "http://localhost:8000") {
+  await waitFor(() => {
+    expect(fetch.mock.calls.map((call) => call[0])).toEqual(
+      expect.arrayContaining([
+        `${base}/cities?state_code=NY&limit=10`,
+        `${base}/state/options`,
+        `${base}/state/read`,
+      ])
+    );
+  });
+}
+
+async function openHealthTab() {
+  await userEvent.click(screen.getByRole("button", { name: /^Health$/i }));
+  await screen.findByText(/Server health and API base/i);
+}
+
+async function openExplorerTab() {
+  await userEvent.click(screen.getByRole("button", { name: /^Explorer$/i }));
+  await screen.findByText(/State Catalog/i);
 }
 
 beforeEach(() => {
@@ -34,6 +64,7 @@ beforeEach(() => {
     status: 200,
     statusText: "OK",
     text: async () => JSON.stringify({}),
+    json: async () => ({}),
   });
 
   localStorage.clear();
@@ -51,50 +82,34 @@ test("loads and normalizes a saved API base from localStorage on mount", async (
     const href = String(url);
 
     if (href.includes("/cities")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () => JSON.stringify([]),
-      });
+      return jsonResponse([]);
     }
 
     if (href.includes("/state/read")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            "Number of Records": 2,
-            States: [
-              { name: "New York", code: "NY" },
-              { name: "California", code: "CA" },
-            ],
-          }),
+      return jsonResponse({
+        "Number of Records": 2,
+        States: [
+          { name: "New York", code: "NY" },
+          { name: "California", code: "CA" },
+        ],
       });
     }
 
     if (href.includes("/state/options")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            options: [
-              { code: "NY", name: "New York" },
-              { code: "CA", name: "California" },
-            ],
-          }),
+      return jsonResponse({
+        options: [
+          { code: "NY", name: "New York" },
+          { code: "CA", name: "California" },
+        ],
       });
     }
 
-    return Promise.resolve({
-      ok: true,
-      text: async () => JSON.stringify({}),
-    });
+    return jsonResponse({});
   });
 
   render(<App />);
+  await waitForInitialAppLoads("http://api.example.com");
 
-  await waitFor(() => {
-    expect(fetch).toHaveBeenCalled();
-  });
   expect(fetch.mock.calls.map((call) => call[0])).toEqual(
     expect.arrayContaining([
       "http://api.example.com/cities?state_code=NY&limit=10",
@@ -103,7 +118,7 @@ test("loads and normalizes a saved API base from localStorage on mount", async (
     ])
   );
 
-  openHealthTab();
+  await openHealthTab();
 
   expect(screen.getByDisplayValue("http://api.example.com")).toBeInTheDocument();
   expect(screen.getByTestId("hello-health-card")).toHaveTextContent(
@@ -116,48 +131,32 @@ test("applies a new API base after successful state/options fetch", async () => 
     const href = String(url);
 
     if (href.includes("/hello")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () => JSON.stringify({ message: "new base hello" }),
-      });
+      return jsonResponse({ message: "new base hello" });
     }
 
     if (href.includes("/cities")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () => JSON.stringify([]),
-      });
+      return jsonResponse([]);
     }
 
     if (href.includes("/state/read")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            "Number of Records": 0,
-            States: [],
-          }),
+      return jsonResponse({
+        "Number of Records": 0,
+        States: [],
       });
     }
 
     if (href.includes("/state/options")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            options: [{ code: "NY", name: "New York" }],
-          }),
+      return jsonResponse({
+        options: [{ code: "NY", name: "New York" }],
       });
     }
 
-    return Promise.resolve({
-      ok: true,
-      text: async () => JSON.stringify({}),
-    });
+    return jsonResponse({});
   });
 
   render(<App />);
-  openHealthTab();
+  await waitForInitialAppLoads();
+  await openHealthTab();
 
   const input = screen.getByPlaceholderText("http://localhost:8000");
   await userEvent.clear(input);
@@ -173,6 +172,7 @@ test("applies a new API base after successful state/options fetch", async () => 
       "HelloHealthCard base: http://backend.test:9000"
     );
   });
+  await waitForInitialAppLoads("http://backend.test:9000");
 
 });
 
@@ -196,48 +196,34 @@ test("filters, sorts, and expands the city list returned from the cities endpoin
     const href = String(url);
 
     if (href.includes("/cities")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () => JSON.stringify(cities),
-      });
+      return jsonResponse(cities);
     }
 
     if (href.includes("/state/read")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            "Number of Records": 2,
-            States: [
-              { name: "New York", code: "NY" },
-              { name: "California", code: "CA" },
-            ],
-          }),
+      return jsonResponse({
+        "Number of Records": 2,
+        States: [
+          { name: "New York", code: "NY" },
+          { name: "California", code: "CA" },
+        ],
       });
     }
 
     if (href.includes("/state/options")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            options: [
-              { code: "NY", name: "New York" },
-              { code: "CA", name: "California" },
-            ],
-          }),
+      return jsonResponse({
+        options: [
+          { code: "NY", name: "New York" },
+          { code: "CA", name: "California" },
+        ],
       });
     }
 
-    return Promise.resolve({
-      ok: true,
-      text: async () => JSON.stringify({}),
-    });
+    return jsonResponse({});
   });
 
   render(<App />);
-
-  openExplorerTab();
+  await waitForInitialAppLoads();
+  await openExplorerTab();
 
   await screen.findByText(/Results:/i);
   expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 12 (showing 10)");
@@ -282,50 +268,37 @@ test("clicking a city shows details panel and hides raw JSON for non-admin", asy
     const href = String(url);
 
     if (href.includes("/cities")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () => JSON.stringify(cities),
-      });
+      return jsonResponse(cities);
     }
 
     if (href.includes("/state/read")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            "Number of Records": 2,
-            States: [
-              { name: "New York", code: "NY" },
-              { name: "Massachusetts", code: "MA" },
-            ],
-          }),
+      return jsonResponse({
+        "Number of Records": 2,
+        States: [
+          { name: "New York", code: "NY" },
+          { name: "Massachusetts", code: "MA" },
+        ],
       });
     }
 
     if (href.includes("/state/options")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            options: [
-              { code: "NY", name: "New York" },
-              { code: "MA", name: "Massachusetts" },
-            ],
-          }),
+      return jsonResponse({
+        options: [
+          { code: "NY", name: "New York" },
+          { code: "MA", name: "Massachusetts" },
+        ],
       });
     }
 
-    return Promise.resolve({
-      ok: true,
-      text: async () => JSON.stringify({}),
-    });
+    return jsonResponse({});
   });
 
   render(<App />);
-  openExplorerTab();
+  await waitForInitialAppLoads();
+  await openExplorerTab();
 
   const albanyRow = await screen.findByText("Albany");
-  fireEvent.click(albanyRow);
+  await userEvent.click(albanyRow);
 
   expect(await screen.findByText(/City Details/i)).toBeInTheDocument();
   expect(screen.getByText(/Population/i).closest(".detail-row")).toHaveTextContent("100000");
@@ -338,6 +311,55 @@ test("clicking a city shows details panel and hides raw JSON for non-admin", asy
   expect(screen.getByText(/Admin login required to view raw JSON/i)).toBeInTheDocument();
 });
 
+test("selecting a city from the map opens City Details", async () => {
+  const cities = [
+    {
+      name: "Albany",
+      state_code: "NY",
+      population: 100000,
+      lat: 42.6526,
+      lng: -73.7562,
+      timezone: "America/New_York",
+    },
+  ];
+
+  fetch.mockImplementation((url) => {
+    const href = String(url);
+
+    if (href.includes("/cities")) {
+      return jsonResponse(cities);
+    }
+
+    if (href.includes("/state/read")) {
+      return jsonResponse({
+        "Number of Records": 1,
+        States: [{ name: "New York", code: "NY" }],
+      });
+    }
+
+    if (href.includes("/state/options")) {
+      return jsonResponse({
+        options: [{ code: "NY", name: "New York" }],
+      });
+    }
+
+    return jsonResponse({});
+  });
+
+  render(<App />);
+  await waitForInitialAppLoads();
+  await openExplorerTab();
+
+  await userEvent.click(await screen.findByRole("button", { name: /select first map city/i }));
+
+  expect(await screen.findByText("City Details")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Details$/i })).toHaveClass("active");
+
+  const detailsCard = screen.getByText("City Details").closest(".card");
+  expect(within(detailsCard).getByText("Name").closest(".detail-row")).toHaveTextContent("Albany");
+  expect(within(detailsCard).getByText("State").closest(".detail-row")).toHaveTextContent("NY");
+});
+
 test("details panel clears when selected city is filtered out", async () => {
   const cities = [
     { name: "Albany", state_code: "NY", population: 100000 },
@@ -348,50 +370,37 @@ test("details panel clears when selected city is filtered out", async () => {
     const href = String(url);
 
     if (href.includes("/cities")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () => JSON.stringify(cities),
-      });
+      return jsonResponse(cities);
     }
 
     if (href.includes("/state/read")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            "Number of Records": 2,
-            States: [
-              { name: "New York", code: "NY" },
-              { name: "Massachusetts", code: "MA" },
-            ],
-          }),
+      return jsonResponse({
+        "Number of Records": 2,
+        States: [
+          { name: "New York", code: "NY" },
+          { name: "Massachusetts", code: "MA" },
+        ],
       });
     }
 
     if (href.includes("/state/options")) {
-      return Promise.resolve({
-        ok: true,
-        text: async () =>
-          JSON.stringify({
-            options: [
-              { code: "NY", name: "New York" },
-              { code: "MA", name: "Massachusetts" },
-            ],
-          }),
+      return jsonResponse({
+        options: [
+          { code: "NY", name: "New York" },
+          { code: "MA", name: "Massachusetts" },
+        ],
       });
     }
 
-    return Promise.resolve({
-      ok: true,
-      text: async () => JSON.stringify({}),
-    });
+    return jsonResponse({});
   });
 
   render(<App />);
-  openExplorerTab();
+  await waitForInitialAppLoads();
+  await openExplorerTab();
 
   const albanyRow = await screen.findByText("Albany");
-  fireEvent.click(albanyRow);
+  await userEvent.click(albanyRow);
 
   expect(screen.getByText("City Details")).toBeInTheDocument();
 
@@ -400,7 +409,7 @@ test("details panel clears when selected city is filtered out", async () => {
   expect(within(detailsCard).getByText("Name").closest(".detail-row")).toHaveTextContent("Albany");
   expect(within(detailsCard).getByText("State").closest(".detail-row")).toHaveTextContent("NY");
 
-  fireEvent.click(screen.getByRole("button", { name: /^Explore$/i }));
+  await userEvent.click(screen.getByRole("button", { name: /^Explore$/i }));
 
   const searchInput = screen.getByPlaceholderText("e.g. York");
   await userEvent.clear(searchInput);
@@ -410,7 +419,7 @@ test("details panel clears when selected city is filtered out", async () => {
     expect(screen.getByText(/Results:/i)).toHaveTextContent("Results: 0");
   });
 
-  fireEvent.click(screen.getByRole("button", { name: /^Details$/i }));
+  await userEvent.click(screen.getByRole("button", { name: /^Details$/i }));
 
   const emptyDetailsCard = screen.getByText("City Details").closest(".card");
   expect(emptyDetailsCard).toBeInTheDocument();

@@ -133,7 +133,7 @@ function FlyToSelectedState({ selectedState }) {
   return null;
 }
 
-function CityMarkers({ points, radiusFor }) {
+function CityMarkers({ points, radiusFor, onCitySelect }) {
   return (
     <>
       {points.map((p, i) => (
@@ -143,6 +143,7 @@ function CityMarkers({ points, radiusFor }) {
           radius={radiusFor(p.population)}
           pathOptions={CITY_MARKER_STYLE}
           eventHandlers={{
+            click: () => onCitySelect?.(p.city),
             mouseover: (e) => e.target.openTooltip(),
             mouseout: (e) => e.target.closeTooltip(),
           }}
@@ -249,7 +250,13 @@ function StateMarkers({ states, selectedState, onStateSelect }) {
   );
 }
 
-export default function GeoMap({ selectedState, cities = [], states = [], onStateSelect }) {
+export default function GeoMap({
+  selectedState,
+  cities = [],
+  states = [],
+  onStateSelect,
+  onCitySelect,
+}) {
   const [zoom, setZoom] = React.useState(MAP_ZOOM);
 
   const points = useMemo(() => {
@@ -260,6 +267,7 @@ export default function GeoMap({ selectedState, cities = [], states = [], onStat
             const lng = Number(c.lng ?? c.longitude);
   
             return {
+              city: c,
               name: c.name ?? "Unknown",
               state: c.state_code ?? c.state ?? "",
               lat,
@@ -279,8 +287,6 @@ export default function GeoMap({ selectedState, cities = [], states = [], onStat
   }, []);
 
   const showCities = Boolean(selectedState) && zoom >= CITY_VISIBLE_ZOOM && points.length > 0;
-
-  console.log("selectedState:", selectedState, "cities:", cities, "points:", points);
 
   return (
     <div className="card">
@@ -304,7 +310,13 @@ export default function GeoMap({ selectedState, cities = [], states = [], onStat
             selectedState={selectedState}
             onStateSelect={onStateSelect}
           />
-          {showCities && <CityMarkers points={points} radiusFor={radiusFor} />}
+          {showCities && (
+            <CityMarkers
+              points={points}
+              radiusFor={radiusFor}
+              onCitySelect={onCitySelect}
+            />
+          )}
         </MapContainer>
       </div>
     </div>

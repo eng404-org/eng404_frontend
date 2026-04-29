@@ -389,6 +389,12 @@ export default function App() {
     }
   }, [apiBase]);
 
+  const handleMapCitySelect = useCallback((city) => {
+    setSelectedCityDetail(city);
+    setShowRawCityJson(false);
+    setExplorerTab("details");
+  }, []);
+
   useEffect(() => {
     loadStates();
   }, [loadStates]);
@@ -660,6 +666,7 @@ export default function App() {
               cities={mapCities}
               states={stateList}
               onStateSelect={loadCitiesForMapState}
+              onCitySelect={handleMapCitySelect}
             />
   
             <div className="selected-state-panel card">
