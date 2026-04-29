@@ -107,6 +107,9 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState("intro");
 
+  const [adminError, setAdminError] = useState("");
+  const [adminLoading, setAdminLoading] = useState(false);
+
   // On mount: set tab from hash first, then localStorage, else intro
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -228,6 +231,11 @@ export default function App() {
   const [adminMessage, setAdminMessage] = useState("");
 
   const handleAdminLogin = async () => {
+  setAdminMessage("");
+  setAdminError("");
+  setAdminLoading(true);
+
+  try {
     const response = await fetch(`${apiBase}/login`, {
       method: "POST",
       headers: {
@@ -238,18 +246,24 @@ export default function App() {
         password: loginPassword,
       }),
     });
-  
+
     const data = await response.json();
-  
+
     if (!response.ok) {
       setIsAdmin(false);
-      setAdminMessage(data.Message || "Login failed");
+      setAdminError(data.Message || "Login failed");
       return;
     }
-  
+
     setIsAdmin(true);
     setAdminMessage(`Logged in as ${data.email}`);
-  };
+  } catch (err) {
+    setAdminError("Network error. Please try again.");
+    setIsAdmin(false);
+  } finally {
+    setAdminLoading(false);
+  }
+};
   
   const fetchAdminRawJson = async () => {
     const response = await fetch(
@@ -520,7 +534,17 @@ export default function App() {
       <>
         <input className="admin-input" placeholder="Admin" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
         <input className="admin-input" type="password" placeholder="••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
-        <button className="tab-btn" onClick={handleAdminLogin}>Login</button>
+        <button
+          className="btn"
+          onClick={handleAdminLogin}
+          disabled={adminLoading}
+        >
+          {adminLoading ? "Logging in..." : "Login"}
+        </button>
+
+        {adminError && (
+          <div className="error-text">{adminError}</div>
+        )}
       </>
     ) : (
       <>
