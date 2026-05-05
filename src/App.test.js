@@ -108,6 +108,21 @@ describe("App Component", () => {
       });
     }
 
+     if (url.includes("/admin/raw-json")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            users: [{ email: "admin@eng404.com" }],
+            count: 1,
+          }),
+        json: async () => ({
+          users: [{ email: "admin@eng404.com" }],
+          count: 1,
+        }),
+      });
+    }
+
      return Promise.resolve({
        ok: true,
        text: async () => JSON.stringify({}),
@@ -319,5 +334,26 @@ test("passes admin status to health card after admin login", async () => {
   await waitFor(() => {
     expect(screen.getByTestId("hello-health-card")).toHaveTextContent("Admin: true");
   });
+});
+
+test("shows admin raw JSON after admin login", async () => {
+  await renderApp();
+
+  await userEvent.type(screen.getByPlaceholderText(/Admin/i), "admin@eng404.com");
+  await userEvent.type(screen.getByPlaceholderText("••••"), "eng404");
+  await userEvent.click(screen.getByRole("button", { name: /^Login$/i }));
+
+  expect(await screen.findByText(/Logged in as admin@eng404.com/i)).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: /view raw json/i }));
+
+  await waitFor(() => {
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/admin/raw-json?email=admin@eng404.com&logged_in=true"
+    );
+  });
+
+  expect(await screen.findByText(/"count": 1/i)).toBeInTheDocument();
+  expect(screen.getByText(/"email": "admin@eng404.com"/i)).toBeInTheDocument();
 });
 });
