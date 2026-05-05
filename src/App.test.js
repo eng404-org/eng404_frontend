@@ -1,5 +1,6 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import App from "./App";
 
@@ -107,6 +108,21 @@ describe("App Component", () => {
       });
     }
 
+     if (url.includes("/admin/raw-json")) {
+      return Promise.resolve({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            users: [{ email: "admin@eng404.com" }],
+            count: 1,
+          }),
+        json: async () => ({
+          users: [{ email: "admin@eng404.com" }],
+          count: 1,
+        }),
+      });
+    }
+
      return Promise.resolve({
        ok: true,
        text: async () => JSON.stringify({}),
@@ -116,11 +132,70 @@ describe("App Component", () => {
  });
 
 
- afterEach(() => {
+ afterEach(async () => {
+   await act(async () => {
+     await Promise.resolve();
+     await Promise.resolve();
+   });
    jest.restoreAllMocks();
  });
- test("renders intro tab by default", () => {
-   render(<App />);
+
+ async function waitForInitialAppLoads(base = "http://localhost:8000") {
+   await waitFor(() => {
+     expect(global.fetch.mock.calls.map((call) => call[0])).toEqual(
+       expect.arrayContaining([
+         `${base}/cities?state_code=NY&limit=10`,
+         `${base}/state/options`,
+         `${base}/state/read`,
+       ])
+     );
+   });
+
+   await act(async () => {
+     await Promise.all(
+       global.fetch.mock.results
+         .map((result) => result.value)
+         .filter((value) => value && typeof value.then === "function")
+     );
+     await Promise.resolve();
+     await Promise.resolve();
+   });
+ }
+
+ async function waitForCitiesFetch(path) {
+   await waitFor(() => {
+     expect(global.fetch).toHaveBeenCalledWith(`http://localhost:8000${path}`);
+   });
+
+   await act(async () => {
+     await Promise.resolve();
+     await Promise.resolve();
+   });
+ }
+
+ async function renderApp() {
+   let result;
+   await act(async () => {
+     result = render(<App />);
+     await Promise.resolve();
+     await Promise.resolve();
+   });
+   await waitForInitialAppLoads();
+   return result;
+ }
+
+ async function openExplorerTab() {
+   await userEvent.click(screen.getByRole("button", { name: /^Explorer$/i }));
+   await screen.findByText(/State Catalog/i);
+ }
+
+ async function openHealthTab() {
+   await userEvent.click(screen.getByRole("button", { name: /^Health$/i }));
+   await screen.findByText(/Server health and API base/i);
+ }
+
+ test("renders intro tab by default", async () => {
+   await renderApp();
    expect(
      screen.getByText(/Welcome to the ENG404 geography dashboard/i)
    ).toBeInTheDocument();
@@ -130,7 +205,7 @@ describe("App Component", () => {
 
  test("loads health tab when hash is set on first load", async () => {
    window.location.hash = "#health";
-   render(<App />);
+   await renderApp();
 
 
    expect(await screen.findByText(/Server health and API base/i)).toBeInTheDocument();
@@ -139,9 +214,8 @@ describe("App Component", () => {
 
 
  test("clicking Explorer updates the URL hash", async () => {
-   render(<App />);
-   const explorerTab = screen.getByRole("button", { name: /^Explorer$/i });
-   fireEvent.click(explorerTab);
+   await renderApp();
+   await openExplorerTab();
 
 
    await waitFor(() => {
@@ -152,7 +226,7 @@ describe("App Component", () => {
 
  test("restores last tab from localStorage when no hash exists", async () => {
    localStorage.setItem("eng404_active_tab", "explorer");
-   render(<App />);
+   await renderApp();
 
 
    await waitFor(() => {
@@ -163,15 +237,8 @@ describe("App Component", () => {
    expect(await screen.findByText(/State Catalog/i)).toBeInTheDocument();
  });
 
-
- async function openExplorerTab() {
-   const explorerTab = screen.getByRole("button", { name: /^Explorer$/i });
-   fireEvent.click(explorerTab);
- }
-
-
  test("loads default cities on mount and displays them", async () => {
-   render(<App />);
+   await renderApp();
    await openExplorerTab();
 
 
@@ -186,7 +253,7 @@ describe("App Component", () => {
 
 
  test("loads states when refresh button is clicked", async () => {
-   render(<App />);
+   await renderApp();
    await openExplorerTab();
 
 
@@ -194,7 +261,7 @@ describe("App Component", () => {
 
 
    const refreshButton = screen.getByRole("button", { name: /load states/i });
-   fireEvent.click(refreshButton);
+   await userEvent.click(refreshButton);
 
 
    expect(await screen.findByText(/Total states:/i)).toBeInTheDocument();
@@ -210,7 +277,7 @@ describe("App Component", () => {
 
  
  test("clear button resets city filters to defaults", async () => {
- render(<App />);
+ await renderApp();
  await openExplorerTab();
 
 
@@ -227,9 +294,11 @@ describe("App Component", () => {
  const sortSelect = screen.getByRole("combobox", { name: /city sort/i });
 
 
- fireEvent.change(stateSelect, { target: { value: "CA" } });
- fireEvent.change(searchInput, { target: { value: "San" } });
- fireEvent.change(sortSelect, { target: { value: "desc" } });
+ await userEvent.selectOptions(stateSelect, "CA");
+ await waitForCitiesFetch("/cities?state_code=CA&limit=10");
+ await userEvent.clear(searchInput);
+ await userEvent.type(searchInput, "San");
+ await userEvent.selectOptions(sortSelect, "desc");
 
 
  expect(stateSelect).toHaveValue("CA");
@@ -237,7 +306,8 @@ describe("App Component", () => {
  expect(sortSelect).toHaveValue("desc");
 
 
- fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+ await userEvent.click(screen.getByRole("button", { name: /clear/i }));
+ await waitForCitiesFetch("/cities?state_code=NY&limit=10");
 
 
  expect(stateSelect).toHaveValue("NY");
@@ -247,25 +317,43 @@ describe("App Component", () => {
 
 
 test("passes admin status to health card after admin login", async () => {
-  render(<App />);
+  await renderApp();
 
-  fireEvent.change(screen.getByPlaceholderText(/Admin/i), {
-    target: { value: "admin@eng404.com" },
+  await userEvent.type(screen.getByPlaceholderText(/Admin/i), "admin@eng404.com");
+
+  await userEvent.type(screen.getByPlaceholderText("••••"), "eng404");
+
+  await userEvent.click(screen.getByRole("button", { name: /^Login$/i }));
+
+  await waitFor(() => {
+    expect(screen.getByText(/Logged in as admin@eng404.com/i)).toBeInTheDocument();
   });
 
-  fireEvent.change(screen.getByPlaceholderText("••••"), {
-    target: { value: "eng404" },
-  });
-
-  fireEvent.click(screen.getByRole("button", { name: /^Login$/i }));
-
-  fireEvent.click(screen.getByRole("button", { name: /^Health$/i }));
+  await openHealthTab();
 
   await waitFor(() => {
     expect(screen.getByTestId("hello-health-card")).toHaveTextContent("Admin: true");
   });
 });
+
+test("shows admin raw JSON after admin login", async () => {
+  await renderApp();
+
+  await userEvent.type(screen.getByPlaceholderText(/Admin/i), "admin@eng404.com");
+  await userEvent.type(screen.getByPlaceholderText("••••"), "eng404");
+  await userEvent.click(screen.getByRole("button", { name: /^Login$/i }));
+
+  expect(await screen.findByText(/Logged in as admin@eng404.com/i)).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: /view raw json/i }));
+
+  await waitFor(() => {
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/admin/raw-json?email=admin@eng404.com&logged_in=true"
+    );
+  });
+
+  expect(await screen.findByText(/"count": 1/i)).toBeInTheDocument();
+  expect(screen.getByText(/"email": "admin@eng404.com"/i)).toBeInTheDocument();
 });
-
-
-
+});

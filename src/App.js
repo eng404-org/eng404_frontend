@@ -107,6 +107,9 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState("intro");
 
+  const [adminError, setAdminError] = useState("");
+  const [adminLoading, setAdminLoading] = useState(false);
+
   // On mount: set tab from hash first, then localStorage, else intro
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -228,6 +231,11 @@ export default function App() {
   const [adminMessage, setAdminMessage] = useState("");
 
   const handleAdminLogin = async () => {
+  setAdminMessage("");
+  setAdminError("");
+  setAdminLoading(true);
+
+  try {
     const response = await fetch(`${apiBase}/login`, {
       method: "POST",
       headers: {
@@ -238,32 +246,48 @@ export default function App() {
         password: loginPassword,
       }),
     });
-  
+
     const data = await response.json();
-  
+
     if (!response.ok) {
       setIsAdmin(false);
-      setAdminMessage(data.Message || "Login failed");
+      setAdminError(data.Message || "Login failed");
       return;
     }
-  
+
     setIsAdmin(true);
-    setAdminMessage(`Logged in as ${data.email}`);
-  };
+    setAdminMessage(`Logged in as ${data.email || loginEmail}`);
+  } catch (err) {
+    setAdminError("Network error. Please try again.");
+    setIsAdmin(false);
+  } finally {
+    setAdminLoading(false);
+  }
+};
   
   const fetchAdminRawJson = async () => {
-    const response = await fetch(
-      `${apiBase}/admin/raw-json?email=${loginEmail}&logged_in=true`
-    );
-  
-    const data = await response.json();
-  
-    if (!response.ok) {
-      setAdminMessage(data.Message || "Unable to load raw JSON");
-      return;
+    setAdminError("");
+    setAdminJson(null);
+    setAdminLoading(true);
+
+    try {
+      const response = await fetch(
+        `${apiBase}/admin/raw-json?email=${loginEmail}&logged_in=true`
+      );
+    
+      const data = await response.json();
+    
+      if (!response.ok) {
+        setAdminError(data.Message || "Unable to load raw JSON");
+        return;
+      }
+    
+      setAdminJson(data);
+    } catch (err) {
+      setAdminError("Network error. Unable to load raw JSON.");
+    } finally {
+      setAdminLoading(false);
     }
-  
-    setAdminJson(data);
   };
 
   const citiesPath = useMemo(() => {
@@ -388,6 +412,12 @@ export default function App() {
       setLoadingMapCities(false);
     }
   }, [apiBase]);
+
+  const handleMapCitySelect = useCallback((city) => {
+    setSelectedCityDetail(city);
+    setShowRawCityJson(false);
+    setExplorerTab("details");
+  }, []);
 
   useEffect(() => {
     loadStates();
@@ -514,16 +544,35 @@ export default function App() {
       <>
         <input className="admin-input" placeholder="Admin" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
         <input className="admin-input" type="password" placeholder="••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
-        <button className="tab-btn" onClick={handleAdminLogin}>Login</button>
+        <button
+          className="btn"
+          onClick={handleAdminLogin}
+          disabled={adminLoading}
+        >
+          {adminLoading ? "Logging in..." : "Login"}
+        </button>
+
+        {adminError && (
+          <div className="error-text">{adminError}</div>
+        )}
       </>
     ) : (
       <>
-        <span className="admin-status">Admin</span>
-        <button className="tab-btn" onClick={fetchAdminRawJson}>JSON</button>
+        <span className="admin-status">{adminMessage || `Logged in as ${loginEmail}`}</span>
+        <button className="tab-btn" onClick={fetchAdminRawJson} disabled={adminLoading}>
+          {adminLoading ? "Loading..." : "View Raw JSON"}
+        </button>
       </>
     )}
   </div>
 </header>
+
+      {isAdmin && (adminError || adminJson) && (
+        <section className="admin-panel">
+          {adminError && <div className="error-text">{adminError}</div>}
+          {adminJson && <JsonBox value={adminJson} />}
+        </section>
+      )}
   
       {activeTab === "intro" && (
         <section className="tab-page">
@@ -660,6 +709,7 @@ export default function App() {
               cities={mapCities}
               states={stateList}
               onStateSelect={loadCitiesForMapState}
+              onCitySelect={handleMapCitySelect}
             />
   
             <div className="selected-state-panel card">
@@ -1000,15 +1050,6 @@ export default function App() {
         </section>
       )}
 
-    {isAdmin && adminJson && (
-      <pre style={{ display: "none" }}>
-        {JSON.stringify(adminJson)}
-      </pre>
-    )}
-
-    {isAdmin && adminMessage && (
-      <span style={{ display: "none" }}>{adminMessage}</span>
-    )}
     </div>
   );
 
