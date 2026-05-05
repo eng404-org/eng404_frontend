@@ -470,6 +470,12 @@
   font-weight: 600;
 }
 
+.admin-panel {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+
 .admin-login {
   display: flex;
   align-items: center;

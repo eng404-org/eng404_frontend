@@ -256,7 +256,7 @@ export default function App() {
     }
 
     setIsAdmin(true);
-    setAdminMessage(`Logged in as ${data.email}`);
+    setAdminMessage(`Logged in as ${data.email || loginEmail}`);
   } catch (err) {
     setAdminError("Network error. Please try again.");
     setIsAdmin(false);
@@ -266,18 +266,28 @@ export default function App() {
 };
   
   const fetchAdminRawJson = async () => {
-    const response = await fetch(
-      `${apiBase}/admin/raw-json?email=${loginEmail}&logged_in=true`
-    );
-  
-    const data = await response.json();
-  
-    if (!response.ok) {
-      setAdminMessage(data.Message || "Unable to load raw JSON");
-      return;
+    setAdminError("");
+    setAdminJson(null);
+    setAdminLoading(true);
+
+    try {
+      const response = await fetch(
+        `${apiBase}/admin/raw-json?email=${loginEmail}&logged_in=true`
+      );
+    
+      const data = await response.json();
+    
+      if (!response.ok) {
+        setAdminError(data.Message || "Unable to load raw JSON");
+        return;
+      }
+    
+      setAdminJson(data);
+    } catch (err) {
+      setAdminError("Network error. Unable to load raw JSON.");
+    } finally {
+      setAdminLoading(false);
     }
-  
-    setAdminJson(data);
   };
 
   const citiesPath = useMemo(() => {
@@ -548,12 +558,21 @@ export default function App() {
       </>
     ) : (
       <>
-        <span className="admin-status">Admin</span>
-        <button className="tab-btn" onClick={fetchAdminRawJson}>JSON</button>
+        <span className="admin-status">{adminMessage || `Logged in as ${loginEmail}`}</span>
+        <button className="tab-btn" onClick={fetchAdminRawJson} disabled={adminLoading}>
+          {adminLoading ? "Loading..." : "View Raw JSON"}
+        </button>
       </>
     )}
   </div>
 </header>
+
+      {isAdmin && (adminError || adminJson) && (
+        <section className="admin-panel">
+          {adminError && <div className="error-text">{adminError}</div>}
+          {adminJson && <JsonBox value={adminJson} />}
+        </section>
+      )}
   
       {activeTab === "intro" && (
         <section className="tab-page">
@@ -1031,15 +1050,6 @@ export default function App() {
         </section>
       )}
 
-    {isAdmin && adminJson && (
-      <pre style={{ display: "none" }}>
-        {JSON.stringify(adminJson)}
-      </pre>
-    )}
-
-    {isAdmin && adminMessage && (
-      <span style={{ display: "none" }}>{adminMessage}</span>
-    )}
     </div>
   );
 

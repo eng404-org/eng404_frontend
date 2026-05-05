@@ -311,7 +311,7 @@ test("passes admin status to health card after admin login", async () => {
   await userEvent.click(screen.getByRole("button", { name: /^Login$/i }));
 
   await waitFor(() => {
-    expect(screen.getByText(/^Admin$/i)).toBeInTheDocument();
+    expect(screen.getByText(/Logged in as admin@eng404.com/i)).toBeInTheDocument();
   });
 
   await openHealthTab();
