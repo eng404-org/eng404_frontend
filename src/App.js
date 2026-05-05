@@ -405,7 +405,7 @@ export default function App() {
 
   useEffect(() => {
     if (Array.isArray(stateOptionsRaw) && stateOptionsRaw.length > 0) {
-      const options = transformSelectOptions(stateOptionsRaw, "code", "name");
+      const options = transformSelectOptions(stateOptionsRaw, "code", "name").sort((a, b) => a.label.localeCompare(b.label));
       setStateOptions(options);
       
       if (options.length > 0 && !stateCode) {
@@ -741,7 +741,7 @@ export default function App() {
                   </label>
   
                   <label className="control">
-                    <span className="label">sort</span>
+                    <span className="label">sort cities</span>
                     <select
                       className="input"
                       aria-label="city sort"
