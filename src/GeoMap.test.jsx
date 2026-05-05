@@ -340,6 +340,21 @@ describe("GeoMap Component", () => {
     expect(smallCityMarker).toHaveAttribute("data-color", "#111827");
     expect(largeCityMarker).toHaveAttribute("data-color", "#111827");
   });
-});
 
+test("renders population legend", () => {
+  render(
+    <GeoMap
+      selectedState={null}
+      cities={[]}
+      states={states}
+      onStateSelect={jest.fn()}
+    />
+  );
+
+  expect(screen.getByText("Population")).toBeInTheDocument();
+  expect(screen.getByText("< 50k")).toBeInTheDocument();
+  expect(screen.getByText("50k – 100k")).toBeInTheDocument();
+  expect(screen.getByText("> 1M")).toBeInTheDocument();
+});
+});
 

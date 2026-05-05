@@ -337,6 +337,35 @@ export default function GeoMap({
             />
           )}
         </MapContainer>
+
+        <div className="map-legend">
+  <div className="legend-title">Population</div>
+
+  <div className="legend-item">
+    <span className="legend-color" style={{ background: "#2563eb" }}></span>
+    <span>&lt; 50k</span>
+  </div>
+
+  <div className="legend-item">
+    <span className="legend-color" style={{ background: "#16a34a" }}></span>
+    <span>50k – 100k</span>
+  </div>
+
+  <div className="legend-item">
+    <span className="legend-color" style={{ background: "#eab308" }}></span>
+    <span>100k – 500k</span>
+  </div>
+
+  <div className="legend-item">
+    <span className="legend-color" style={{ background: "#ea580c" }}></span>
+    <span>500k – 1M</span>
+  </div>
+
+  <div className="legend-item">
+    <span className="legend-color" style={{ background: "#7f1d1d" }}></span>
+    <span>&gt; 1M</span>
+  </div>
+</div>
       </div>
     </div>
   );
