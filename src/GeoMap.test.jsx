@@ -14,11 +14,16 @@ jest.mock("react-leaflet", () => ({
   TileLayer: () => <div data-testid="tile-layer" />,
   Popup: ({ children }) => <div>{children}</div>,
   Tooltip: ({ children }) => <div>{children}</div>,
-  CircleMarker: ({ children, eventHandlers, center }) => (
+  CircleMarker: ({ children, eventHandlers, center, radius, pathOptions }) => (
     <button
       type="button"
       data-testid="circle-marker"
       data-center={JSON.stringify(center)}
+      data-radius={radius}
+      data-color={pathOptions?.color}
+      data-fill-color={pathOptions?.fillColor}
+      data-weight={pathOptions?.weight}
+      data-fill-opacity={pathOptions?.fillOpacity}
       onClick={() => eventHandlers?.click?.()}
       onMouseOver={() => eventHandlers?.mouseover?.({ target: { openTooltip: jest.fn() } })}
       onMouseOut={() => eventHandlers?.mouseout?.({ target: { closeTooltip: jest.fn() } })}
@@ -306,4 +311,35 @@ describe("GeoMap Component", () => {
     expect(screen.getAllByText("Albany").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Population: 100000").length).toBeGreaterThan(0);
   });
+
+  test("color codes city markers by population", () => {
+    const cities = [
+      { name: "Small City", state_code: "NY", lat: 42.1, lng: -73.1, population: 10000 },
+      { name: "Large City", state_code: "NY", lat: 42.2, lng: -73.2, population: 1200000 },
+    ];
+  
+    mockZoom = 7;
+  
+    render(
+      <GeoMap
+        selectedState="NY"
+        cities={cities}
+        states={states}
+        onStateSelect={jest.fn()}
+      />
+    );
+  
+    const markers = screen.getAllByTestId("circle-marker");
+  
+    const smallCityMarker = markers[2];
+    const largeCityMarker = markers[3];
+  
+    expect(smallCityMarker).toHaveAttribute("data-fill-color", "#2563eb");
+    expect(largeCityMarker).toHaveAttribute("data-fill-color", "#7f1d1d");
+  
+    expect(smallCityMarker).toHaveAttribute("data-color", "#111827");
+    expect(largeCityMarker).toHaveAttribute("data-color", "#111827");
+  });
 });
+
+

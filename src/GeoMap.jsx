@@ -133,7 +133,7 @@ function FlyToSelectedState({ selectedState }) {
   return null;
 }
 
-function CityMarkers({ points, radiusFor, onCitySelect }) {
+function CityMarkers({ points, radiusFor, colorFor, onCitySelect }) {
   return (
     <>
       {points.map((p, i) => (
@@ -141,7 +141,13 @@ function CityMarkers({ points, radiusFor, onCitySelect }) {
           key={`${p.name}-${p.state}-${i}`}
           center={[p.lat, p.lng]}
           radius={radiusFor(p.population)}
-          pathOptions={CITY_MARKER_STYLE}
+          pathOptions={{
+            ...CITY_MARKER_STYLE,
+            color: "#111827",                  // dark border (same for all)
+            fillColor: colorFor(p.population), // population-based color
+            fillOpacity: 0.8,
+            weight: 2,
+          }}
           eventHandlers={{
             click: () => onCitySelect?.(p.city),
             mouseover: (e) => e.target.openTooltip(),
@@ -282,7 +288,19 @@ export default function GeoMap({
   const radiusFor = useMemo(() => {
     return (v) => {
       const n = Number(v) || 1;
-      return Math.max(4, Math.min(12, Math.sqrt(n) / 120));
+      return Math.max(4, Math.min(12, Math.sqrt(n) / 180));
+    };
+  }, []);
+
+  const colorFor = useMemo(() => {
+    return (pop) => {
+      const n = Number(pop) || 0;
+  
+      if (n >= 1000000) return "#7f1d1d"; // dark red
+      if (n >= 500000) return "#ea580c";  // orange
+      if (n >= 100000) return "#eab308";  // yellow
+      if (n >= 50000) return "#16a34a";   // green
+      return "#2563eb";                   // blue
     };
   }, []);
 
@@ -314,6 +332,7 @@ export default function GeoMap({
             <CityMarkers
               points={points}
               radiusFor={radiusFor}
+              colorFor={colorFor}
               onCitySelect={onCitySelect}
             />
           )}
