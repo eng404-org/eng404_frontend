@@ -562,6 +562,18 @@ export default function App() {
         <button className="tab-btn" onClick={fetchAdminRawJson} disabled={adminLoading}>
           {adminLoading ? "Loading..." : "View Raw JSON"}
         </button>
+
+        <button
+          className="tab-btn"
+          onClick={() => {
+            setIsAdmin(false);
+            setAdminJson(null);
+            setAdminMessage("");
+            setLoginPassword("");
+          }}
+         >
+          Logout
+        </button>
       </>
     )}
   </div>
